@@ -66,7 +66,24 @@ def extract_patch(text):
     start = text.find("diff --git")
     if start < 0:
         return None
-    return text[start:]
+    lines = text[start:].splitlines()
+    patch_lines = []
+    for i, ln in enumerate(lines):
+        stripped = ln.strip()
+        is_marker = (
+            ln.startswith("diff --git")
+            or ln.startswith("index ")
+            or ln.startswith("--- a/")
+            or ln.startswith("+++ b/")
+            or ln.startswith("@@")
+            or ln.startswith("\\ No newline")
+        )
+        is_content = ln.startswith(("+", "-", " ")) and ln != "+++"
+        if i == 0 or is_marker or is_content or (stripped == "" and patch_lines):
+            patch_lines.append(ln)
+        else:
+            break
+    return "\n".join(patch_lines)
 
 
 def validate_patch(patch):
