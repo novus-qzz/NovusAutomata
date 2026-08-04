@@ -103,7 +103,7 @@ def push_verified(max_tries=RETRY_PUSH, wait=RETRY_PUSH_WAIT):
         if r.returncode != 0:
             time.sleep(wait)
             continue
-        time.sleep(2)
+        time.sleep(5)
         git("fetch", "origin", "main")
         head = git("rev-parse", "HEAD").stdout.strip()
         remote = git("rev-parse", "origin/main").stdout.strip()
@@ -274,13 +274,13 @@ def main():
             print(f"  [iter {i}] 04 failed to fix", flush=True)
             continue
 
-        for fetch_attempt in range(5):
+        for fetch_attempt in range(10):
             git("fetch", "origin", "main")
             r = git("rev-parse", "origin/main")
             remote_head = r.stdout.strip()
             if remote_head != bug_sha:
                 break
-            time.sleep(3)
+            time.sleep(8)
         git("reset", "--hard", "origin/main")
         pass_, err = verify()
         status = "verified" if pass_ else "verify_failed"
