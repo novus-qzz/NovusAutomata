@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
 """AI auto-fix for pull requests using SenseNova (OpenAI-compatible API).
 
-Generates a unified diff via LLM, validates it against a path whitelist,
-then applies it to the working tree. Safe guards:
-  - patch must be a valid unified diff
-  - paths restricted to code directories
+Generates fixed file contents via LLM (===FILE:...=== blocks), validates
+the paths, then writes them to the working tree. Safe guards:
+  - output must contain valid ===FILE blocks
   - forbidden paths (.github/, lockfiles, secrets) are rejected
+  - files must be non-empty and must produce an actual change
 """
 import json
 import os
+import re
 import subprocess
 import sys
 import urllib.request
+
+FILE_BLOCK_RE = re.compile(r"===FILE:([^\s=]+)===\s*(.*?)\s*===END===", re.DOTALL)
 
 API_KEY = os.environ.get("AI_API_KEY", "")
 BASE_URL = os.environ.get("AI_BASE_URL", "https://token.sensenova.cn/v1")
@@ -63,37 +66,33 @@ def call_llm(messages):
     return content
 
 
-def extract_patch(text):
-    start = text.find("diff --git")
-    if start < 0:
+def extract_files(text):
+    blocks = FILE_BLOCK_RE.findall(text)
+    if not blocks:
         return None
-    lines = text[start:].splitlines()
-    patch_lines = []
-    for i, ln in enumerate(lines):
-        stripped = ln.strip()
-        is_marker = (
-            ln.startswith("diff --git")
-            or ln.startswith("index ")
-            or ln.startswith("--- a/")
-            or ln.startswith("+++ b/")
-            or ln.startswith("@@")
-            or ln.startswith("\\ No newline")
-        )
-        is_content = ln.startswith(("+", "-", " ")) and ln != "+++"
-        if i == 0 or is_marker or is_content or (stripped == "" and patch_lines):
-            patch_lines.append(ln)
-        else:
-            break
-    return "\n".join(patch_lines)
+    files = {}
+    for path, content in blocks:
+        path = path.strip()
+        if not path or any(bad in path for bad in FORBIDDEN_SUBSTR):
+            print(f"::error::Rejected path: {path!r}")
+            return None
+        content = content.strip("\n")
+        if not content:
+            print("::error::AI returned empty content for a file")
+            return None
+        if not content.endswith("\n"):
+            content += "\n"
+        files[path] = content
+    return files
 
 
-def validate_patch(patch):
-    for line in patch.splitlines():
-        if line.startswith("+++ b/") or line.startswith("--- a/"):
-            path = line.split(" b/", 1)[-1].strip()
-            if any(bad in path for bad in FORBIDDEN_SUBSTR):
-                return False, f"forbidden path: {path}"
-    return True, ""
+def write_files(files):
+    for path, content in files.items():
+        parent = os.path.dirname(path)
+        if parent:
+            os.makedirs(parent, exist_ok=True)
+        with open(path, "w", encoding="utf-8", newline="\n") as f:
+            f.write(content)
 
 
 def main():
@@ -109,20 +108,21 @@ def main():
 
     prompt = (
         "You are an expert code reviewer and fixer. Below is a git diff "
-        "(`git diff <base>`): lines starting with `-` are the OLD version, "
-        "lines starting with `+` are the CURRENT code in the PR. "
-        "Find concrete bugs, style violations, and safe auto-fixable issues "
-        "in the CURRENT (`+`) code, then produce a SINGLE unified diff that "
-        "fixes them.\n\n"
+        "(`git diff <base>`): lines starting with `-` are the OLD (base) "
+        "version, lines starting with `+` are the CURRENT code in the PR. "
+        "Find concrete bugs and safe auto-fixable issues in the CURRENT "
+        "(`+`) code, then produce the FULL FIXED CONTENT of each affected "
+        "file.\n\n"
+        "Output format for each fixed file, EXACTLY:\n"
+        "===FILE:<relative/path>===\n"
+        "<complete fixed file content>\n"
+        "===END===\n\n"
         "Rules:\n"
-        "- Output ONLY the unified diff, starting with `diff --git`. No explanations, "
-        "no markdown fences.\n"
-        "- Fix the `+` side (current code). Your patch's `+` lines must actually "
-        "differ from the `-` lines when fixing a bug.\n"
-        "- Do not change behavior beyond the identified issues.\n"
-        "- Do NOT fix whitespace or trailing-newline issues (e.g. W292); "
-        "those are handled by a separate formatter. Only fix real logic bugs "
-        "and style violations that require code changes.\n"
+        "- Only output the ===FILE blocks. No explanations, no markdown fences.\n"
+        "- Output the COMPLETE file content (not a diff, not a fragment).\n"
+        "- Only fix real logic bugs and concrete issues that require code "
+        "changes. Do NOT reformat code or touch whitespace / trailing "
+        "newlines; those are handled by a separate formatter.\n"
         "- Never touch: .github/, .env*, lockfiles, secrets, credential files, "
         "or generated files.\n\n"
         f"Diff:\n{diff}"
@@ -132,48 +132,25 @@ def main():
     for attempt in range(1, max_attempts + 1):
         print(f"::notice::AI fix attempt {attempt}/{max_attempts}")
         content = call_llm([
-            {"role": "system", "content": "You output only valid unified diffs."},
+            {"role": "system", "content": "You output only ===FILE blocks with complete file contents."},
             {"role": "user", "content": prompt},
         ])
 
-        patch = extract_patch(content)
-        if not patch:
-            print("::warning::No valid diff block in AI response; retrying")
+        files = extract_files(content)
+        if not files:
+            print("::warning::No valid file blocks in AI response; retrying")
             continue
 
-        ok, reason = validate_patch(patch)
-        if not ok:
-            print(f"::error::Patch rejected (safety): {reason}")
-            return 1
-
-        with open("fix.patch", "w", encoding="utf-8", newline="\n") as f:
-            f.write(patch)
-
-        check = run(["git", "apply", "--check", "--3way", "fix.patch"])
-        if check.returncode != 0:
-            print(f"::warning::Patch does not apply cleanly (attempt {attempt}):\n{check.stderr}")
-            if attempt == max_attempts:
-                print(f"::error::Patch failed after {max_attempts} attempts")
-            continue
-
-        r = run(["git", "apply", "--3way", "fix.patch"])
-        if r.returncode != 0:
-            print(f"::warning::Failed to apply patch (attempt {attempt}):\n{r.stderr}")
-            if attempt == max_attempts:
-                print(f"::error::Patch failed after {max_attempts} attempts")
-            continue
+        write_files(files)
 
         status = run(["git", "status", "--porcelain"])
         if not status.stdout.strip():
-            print(f"::warning::AI produced no effective changes (no-op patch, attempt {attempt})")
+            print(f"::warning::AI produced no effective changes (no-op, attempt {attempt})")
             if attempt == max_attempts:
                 print(f"::error::No effective fix after {max_attempts} attempts")
             continue
 
-        if os.path.exists("fix.patch"):
-            os.remove("fix.patch")
-
-        print("::notice::Patch applied successfully")
+        print("::notice::AI fix applied successfully")
         return 0
 
     return 1
