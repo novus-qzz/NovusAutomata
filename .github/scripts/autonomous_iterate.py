@@ -23,11 +23,11 @@ REPO = subprocess.check_output(
     ["git", "rev-parse", "--show-toplevel"], text=True
 ).strip()
 os.chdir(REPO)
-REPO_NAME = "/".join(
-    subprocess.check_output(
-        ["git", "remote", "get-url", "origin"], text=True
-    ).strip().rstrip("/").split("/")[-2:]
-)
+REMOTE_URL = subprocess.check_output(
+    ["git", "remote", "get-url", "origin"], text=True
+).strip()
+parts = [p for p in REMOTE_URL.rstrip("/").split("/") if p]
+REPO_NAME = "/".join(parts[-2:]).replace(".git", "")
 
 LOG_FILE = os.path.join(REPO, ".iterate_log.jsonl")
 WF_NAME = "04 AI Fix - Auto Commit"
