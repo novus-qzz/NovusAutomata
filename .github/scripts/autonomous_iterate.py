@@ -132,7 +132,14 @@ def push_with_retry(max_tries=40, wait=12):
     for i in range(1, max_tries + 1):
         r = git("push")
         if r.returncode == 0:
-            return True
+            r2 = git("fetch", "origin", "main")
+            if r2.returncode == 0:
+                head = git("rev-parse", "HEAD").stdout.strip()
+                remote = git("rev-parse", "origin/main").stdout.strip()
+                if head == remote:
+                    return True
+            time.sleep(wait)
+            continue
         time.sleep(wait)
     return False
 
