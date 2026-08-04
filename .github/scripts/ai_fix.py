@@ -9,7 +9,6 @@ then applies it to the working tree. Safe guards:
 """
 import json
 import os
-import re
 import subprocess
 import sys
 import urllib.request
