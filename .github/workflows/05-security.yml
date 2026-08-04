@@ -1,4 +1,4 @@
-name: "05 Security - CodeQL"
+name: "05 Security - Static Scan"
 
 on:
   push:
@@ -10,19 +10,29 @@ on:
 
 permissions:
   contents: read
-  security-events: write
-  actions: read
 
 jobs:
-  analyze:
-    name: Analyze
+  security:
+    name: Security Scan
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - uses: github/codeql-action/init@v3
+      - name: Secret leak scan (gitleaks)
+        uses: docker://gitleaks/gitleaks:latest
         with:
-          languages: python
-          queries: security-and-quality
+          args: detect --source . --no-banner
 
-      - uses: github/codeql-action/analyze@v3
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Python security scan (bandit)
+        run: |
+          pip install bandit
+          bandit -r . -x .github -ll
+
+      - name: Dependency audit (pip-audit)
+        run: |
+          pip install pip-audit
+          pip-audit
