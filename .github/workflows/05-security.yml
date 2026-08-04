@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Secret leak scan (gitleaks)
-        uses: docker://gitleaks/gitleaks:latest
+        uses: docker://zricethezav/gitleaks:latest
         with:
           args: detect --source . --no-banner
 
