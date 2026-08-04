@@ -17,10 +17,6 @@ API_KEY = os.environ.get("AI_API_KEY", "")
 BASE_URL = os.environ.get("AI_BASE_URL", "https://token.sensenova.cn/v1")
 MODEL = os.environ.get("AI_MODEL", "sensenova-6.7-flash-lite")
 
-ALLOWED_PREFIXES = (
-    "src/", "lib/", "tests/", "test/", "app/", "cmd/", "internal/",
-    "pkg/", "components/", "utils/", "models/", "scripts/",
-)
 FORBIDDEN_SUBSTR = (
     ".github/", ".env", "secret", "credential", "token",
     "package-lock.json", "pnpm-lock.yaml", "yarn.lock",
@@ -76,11 +72,9 @@ def extract_patch(text):
 def validate_patch(patch):
     for line in patch.splitlines():
         if line.startswith("+++ b/") or line.startswith("--- a/"):
-            path = line.split("/", 2)[-1].strip()
+            path = line.split(" b/", 1)[-1].strip()
             if any(bad in path for bad in FORBIDDEN_SUBSTR):
                 return False, f"forbidden path: {path}"
-            if not path.startswith(ALLOWED_PREFIXES):
-                return False, f"path outside whitelist: {path}"
     return True, ""
 
 
@@ -103,9 +97,8 @@ def main():
         "Rules:\n"
         "- Output ONLY the unified diff, starting with `diff --git`. No explanations.\n"
         "- Do not change behavior beyond the identified issues.\n"
-        "- Only touch files under: src/, lib/, tests/, test/, app/, cmd/, "
-        "internal/, pkg/, components/, utils/, models/, scripts/\n"
-        "- Never touch: .github/, .env*, lockfiles, secrets, generated files.\n\n"
+        "- Never touch: .github/, .env*, lockfiles, secrets, credential files, "
+        "or generated files.\n\n"
         f"Diff:\n{diff}"
     )
 

@@ -30,7 +30,7 @@ jobs:
       - if: steps.detect.outputs.language == 'node'
         run: npm ci || npm install
       - if: steps.detect.outputs.language == 'node'
-        run: npx --yes eslint -f github . | reviewdog -f=github-actions -name=eslint -reporter=github-pr-review -filter-mode=nofilter -fail-on-error=false
+        run: npx --yes eslint -f checkstyle . | reviewdog -f=checkstyle -name=eslint -reporter=github-pr-review -filter-mode=nofilter -fail-on-error=false
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -38,16 +38,14 @@ jobs:
       - if: steps.detect.outputs.language == 'python'
         run: pip install ruff
       - if: steps.detect.outputs.language == 'python'
-        run: ruff check --output-format github . | reviewdog -f=github-actions -name=ruff -reporter=github-pr-review -filter-mode=nofilter -fail-on-error=false
+        run: ruff check --output-format rdjson . | reviewdog -f=rdjson -name=ruff -reporter=github-pr-review -filter-mode=nofilter -fail-on-error=false
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # ---- Go ----
       - if: steps.detect.outputs.language == 'go'
         uses: golangci/golangci-lint-action@v6
-        with:
-          args: --out-format=github-actions
       - if: steps.detect.outputs.language == 'go'
-        run: golangci-lint run --out-format=github-actions | reviewdog -f=github-actions -name=golangci-lint -reporter=github-pr-review -filter-mode=nofilter -fail-on-error=false
+        run: golangci-lint run --out-format=checkstyle . | reviewdog -f=checkstyle -name=golangci-lint -reporter=github-pr-review -filter-mode=nofilter -fail-on-error=false
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
