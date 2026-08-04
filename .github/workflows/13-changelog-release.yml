@@ -1,0 +1,46 @@
+name: "13 AI - Changelog & Release"
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      from-tag:
+        description: "Start tag"
+        required: true
+      to-tag:
+        description: "End tag"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Generate changelog
+        env:
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        run: |
+          FROM_TAG="${{ github.event.inputs.from-tag }}"
+          TO_TAG="${{ github.event.inputs.to-tag || github.ref_name }}"
+          python .github/scripts/nvidia_ai.py changelog \
+            --from-tag "$FROM_TAG" --to-tag "$TO_TAG"
+
+      - name: Commit changelog
+        run: |
+          if [ -n "$(git status --porcelain CHANGELOG.md)" ]; then
+            git config user.name "novus-automata[bot]"
+            git config user.email "bot@novusautomata.dev"
+            git add CHANGELOG.md
+            git commit -m "docs: update CHANGELOG for ${{ github.event.inputs.to-tag || github.ref_name }}"
+            git push
+          fi

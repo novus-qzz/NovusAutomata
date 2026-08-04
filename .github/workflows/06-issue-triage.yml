@@ -1,0 +1,27 @@
+name: "06 AI - Issue Triage"
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Auto-triage issue
+        env:
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          NVIDIA_TRIAGE_MODEL: ${{ vars.NVIDIA_TRIAGE_MODEL || 'nvidia/nemotron-3-super-120b-a12b' }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python .github/scripts/nvidia_ai.py triage \
+            --issue-number ${{ github.event.issue.number }}

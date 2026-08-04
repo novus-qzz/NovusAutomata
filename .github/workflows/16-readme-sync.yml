@@ -1,0 +1,50 @@
+name: "16 AI - README Sync"
+on:
+  push:
+    branches: [main]
+    paths:
+      - "*.py"
+      - "src/**"
+      - "app/**"
+  schedule:
+    - cron: "0 8 1 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Sync README
+        env:
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        run: |
+          python .github/scripts/nvidia_ai.py readme --files "$(git diff --name-only HEAD~1)"
+
+      - name: Create PR if README changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ -n "$(git status --porcelain README.md)" ]; then
+            BRANCH="ai/readme-sync-$(date +%Y%m%d)"
+            git checkout -b "$BRANCH"
+            git add README.md
+            git commit -m "docs: auto-sync README with code changes"
+            git push origin "$BRANCH"
+            gh pr create \
+              --title "docs: auto-sync README" \
+              --body "Auto-generated PR to sync README with recent code changes." \
+              --head "$BRANCH" \
+              --label "documentation,ai-generated"
+          fi

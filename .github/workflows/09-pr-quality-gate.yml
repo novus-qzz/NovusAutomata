@@ -1,0 +1,33 @@
+name: "09 AI - Quality Gate"
+on:
+  pull_request:
+    types: [opened, synchronize]
+  workflow_dispatch:
+    inputs:
+      pr-number:
+        description: "PR number"
+        required: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run quality gate
+        env:
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          NVIDIA_QUALITY_MODEL: ${{ vars.NVIDIA_QUALITY_MODEL || 'deepseek-ai/deepseek-v4-pro' }}
+        run: |
+          python .github/scripts/nvidia_ai.py quality \
+            --pr-number ${{ github.event.inputs.pr-number || github.event.pull_request.number }}

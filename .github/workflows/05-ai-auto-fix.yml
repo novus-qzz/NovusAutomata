@@ -1,0 +1,51 @@
+name: "05 AI - Auto Fix"
+on:
+  workflow_dispatch:
+    inputs:
+      pr-number:
+        description: "PR number to fix"
+        required: false
+  pull_request:
+    types: [opened, synchronize]
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref }}
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run AI auto-fix
+        id: fix
+        env:
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          NVIDIA_FIX_MODEL: ${{ vars.NVIDIA_FIX_MODEL || 'deepseek-ai/deepseek-v4-flash' }}
+        run: |
+          python .github/scripts/nvidia_ai.py fix \
+            --pr-number ${{ github.event.inputs.pr-number || github.event.pull_request.number || '' }}
+
+      - name: Commit and push fixes
+        if: steps.fix.outcome == 'success'
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git config user.name "novus-automata[bot]"
+            git config user.email "bot@novusautomata.dev"
+            git add -A
+            git commit -m "chore: AI auto-fix [NovusAutomata]"
+            git push
+            echo "::notice::AI fixes committed and pushed"
+          else
+            echo "::notice::No changes after fix"
+          fi
