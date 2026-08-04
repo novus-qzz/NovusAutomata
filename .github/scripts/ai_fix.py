@@ -147,6 +147,9 @@ def main():
         print(f"::error::Failed to apply patch:\n{r.stderr}")
         return 1
 
+    if os.path.exists("fix.patch"):
+        os.remove("fix.patch")
+
     print("::notice::Patch applied successfully")
     return 0
 
