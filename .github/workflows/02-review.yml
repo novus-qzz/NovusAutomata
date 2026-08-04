@@ -14,6 +14,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: reviewdog/action-setup@v1
+        with:
+          reviewdog_version: latest
+
       - uses: ./.github/actions/detect-language
         id: detect
 
@@ -26,33 +30,24 @@ jobs:
       - if: steps.detect.outputs.language == 'node'
         run: npm ci || npm install
       - if: steps.detect.outputs.language == 'node'
-        uses: reviewdog/action-eslint@v1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          reporter: github-pr-review
-          fail_on_error: false
+        run: npx --yes eslint -f github . | reviewdog -f=github-actions -name=eslint -reporter=github-pr-review -filter-mode=nofilter -fail-on-error=false
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # ---- Python ----
       - if: steps.detect.outputs.language == 'python'
-        uses: reviewdog/action-ruff@v1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          reporter: github-pr-review
-          ruff_args: check --select E,F,I,W
-          fail_on_error: false
+        run: pip install ruff
+      - if: steps.detect.outputs.language == 'python'
+        run: ruff check --output-format github . | reviewdog -f=github-actions -name=ruff -reporter=github-pr-review -filter-mode=nofilter -fail-on-error=false
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # ---- Go ----
       - if: steps.detect.outputs.language == 'go'
-        uses: reviewdog/action-golangci-lint@v2
+        uses: golangci/golangci-lint-action@v6
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          reporter: github-pr-review
-          fail_on_error: false
-
-      # ---- Rust ----
-      - if: steps.detect.outputs.language == 'rust'
-        uses: reviewdog/action-clippy@v1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          reporter: github-pr-review
-          fail_on_error: false
+          args: --out-format=github-actions
+      - if: steps.detect.outputs.language == 'go'
+        run: golangci-lint run --out-format=github-actions | reviewdog -f=github-actions -name=golangci-lint -reporter=github-pr-review -filter-mode=nofilter -fail-on-error=false
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}

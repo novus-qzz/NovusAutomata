@@ -45,7 +45,8 @@ def call_llm(messages):
         "model": MODEL,
         "messages": messages,
         "temperature": 0.2,
-        "max_tokens": 4096,
+        "max_tokens": 8192,
+        "thinking": {"type": "disabled"},
     }).encode("utf-8")
     url = BASE_URL.rstrip("/") + "/chat/completions"
     req = urllib.request.Request(
@@ -58,7 +59,11 @@ def call_llm(messages):
     )
     with urllib.request.urlopen(req, timeout=180) as resp:
         data = json.load(resp)
-    return data["choices"][0]["message"]["content"]
+    message = data["choices"][0]["message"]
+    content = message.get("content") or ""
+    if not content.strip():
+        raise RuntimeError("SenseNova returned empty content; check model response")
+    return content
 
 
 def extract_patch(text):
