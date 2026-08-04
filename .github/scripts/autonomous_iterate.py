@@ -98,6 +98,7 @@ def gh_cli(*a):
 def push_verified(max_tries=RETRY_PUSH, wait=RETRY_PUSH_WAIT):
     """Push and verify by comparing HEAD vs origin/main."""
     for i in range(1, max_tries + 1):
+        git("fetch", "origin", "main")
         r = git("push")
         if r.returncode != 0:
             time.sleep(wait)
