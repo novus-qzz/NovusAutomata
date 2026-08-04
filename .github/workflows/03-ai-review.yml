@@ -1,4 +1,4 @@
-name: "03 AI Review - SenseNova"
+name: "03 AI Review"
 
 on:
   pull_request:
@@ -21,13 +21,30 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: tag1consulting/ai-pr-review/container-action@main
+      - name: AI Review (SenseNova primary)
+        id: review_sensenova
+        uses: tag1consulting/ai-pr-review/container-action@main
         with:
           provider: openai-compatible
           api-key: ${{ secrets.AI_REVIEW_API_KEY }}
           base-url: ${{ vars.AI_REVIEW_BASE_URL || 'https://token.sensenova.cn/v1' }}
           model-standard: ${{ vars.AI_REVIEW_MODEL_STANDARD || 'sensenova-6.7-flash-lite' }}
           model-premium: ${{ vars.AI_REVIEW_MODEL_PREMIUM || 'sensenova-6.7-flash-lite' }}
+          review-mode: quick
+          pr-number: ${{ github.event.inputs.pr-number || github.event.pull_request.number }}
+          base-ref: ${{ github.event.pull_request.base.ref || 'main' }}
+          head-sha: ${{ github.event.pull_request.head.sha }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: AI Review (NVIDIA fallback)
+        if: steps.review_sensenova.outcome == 'skipped' || steps.review_sensenova.outcome == 'failure'
+        uses: tag1consulting/ai-pr-review/container-action@main
+        with:
+          provider: openai-compatible
+          api-key: ${{ secrets.NVIDIA_API_KEY }}
+          base-url: ${{ vars.NVIDIA_BASE_URL || 'https://integrate.api.nvidia.com/v1' }}
+          model-standard: ${{ vars.NVIDIA_MODEL || 'meta/llama-3.1-8b-instruct' }}
+          model-premium: ${{ vars.NVIDIA_MODEL || 'meta/llama-3.1-8b-instruct' }}
           review-mode: quick
           pr-number: ${{ github.event.inputs.pr-number || github.event.pull_request.number }}
           base-ref: ${{ github.event.pull_request.base.ref || 'main' }}

@@ -32,9 +32,12 @@ jobs:
       - name: Run AI auto-fix
         id: fix
         env:
-          AI_API_KEY: ${{ secrets.AI_REVIEW_API_KEY }}
-          AI_BASE_URL: ${{ vars.AI_REVIEW_BASE_URL || 'https://token.sensenova.cn/v1' }}
-          AI_MODEL: ${{ vars.AI_REVIEW_MODEL_STANDARD || 'sensenova-6.7-flash-lite' }}
+          AI_REVIEW_API_KEY: ${{ secrets.AI_REVIEW_API_KEY }}
+          AI_REVIEW_BASE_URL: ${{ vars.AI_REVIEW_BASE_URL || 'https://token.sensenova.cn/v1' }}
+          AI_REVIEW_MODEL_STANDARD: ${{ vars.AI_REVIEW_MODEL_STANDARD || 'sensenova-6.7-flash-lite' }}
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          NVIDIA_BASE_URL: ${{ vars.NVIDIA_BASE_URL || 'https://integrate.api.nvidia.com/v1' }}
+          NVIDIA_MODEL: ${{ vars.NVIDIA_MODEL || 'meta/llama-3.1-8b-instruct' }}
           AI_FIX_BASE_SHA: ${{ github.event.inputs.base-ref || github.event.pull_request.base.sha || 'HEAD~1' }}
         run: python .github/scripts/ai_fix.py
 
