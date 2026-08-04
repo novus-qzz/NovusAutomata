@@ -9,6 +9,8 @@ on:
         default: "main"
   pull_request:
     types: [opened, synchronize]
+  push:
+    branches: [main]
 
 permissions:
   contents: write
@@ -33,7 +35,7 @@ jobs:
           AI_API_KEY: ${{ secrets.AI_REVIEW_API_KEY }}
           AI_BASE_URL: ${{ vars.AI_REVIEW_BASE_URL || 'https://token.sensenova.cn/v1' }}
           AI_MODEL: ${{ vars.AI_REVIEW_MODEL_STANDARD || 'sensenova-6.7-flash-lite' }}
-          AI_FIX_BASE_SHA: ${{ github.event.inputs.base-ref || github.event.pull_request.base.sha || 'main' }}
+          AI_FIX_BASE_SHA: ${{ github.event.inputs.base-ref || github.event.pull_request.base.sha || 'HEAD~1' }}
         run: python .github/scripts/ai_fix.py
 
       - name: Commit and push fixes
