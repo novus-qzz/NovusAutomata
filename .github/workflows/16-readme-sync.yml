@@ -30,7 +30,8 @@ jobs:
         env:
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
         run: |
-          python .github/scripts/nvidia_ai.py readme --files "$(git diff --name-only HEAD~1)"
+          FILES="$(git diff --name-only HEAD~1 2>/dev/null || git diff --name-only $(git rev-list --max-parents=0 HEAD) HEAD || true)"
+          python .github/scripts/nvidia_ai.py readme --files "$FILES"
 
       - name: Create PR if README changed
         env:

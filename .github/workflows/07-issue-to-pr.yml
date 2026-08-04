@@ -42,11 +42,26 @@ jobs:
       - name: Generate fix from issue
         env:
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          ISSUE_TITLE: ${{ steps.issue.outputs.title }}
+          ISSUE_BODY: ${{ steps.issue.outputs.body }}
         run: |
-          python .github/scripts/nvidia_ai.py fix --pr-number ""
+          echo "$ISSUE_TITLE" > /tmp/issue_title.txt
+          echo "$ISSUE_BODY" > /tmp/issue_body.txt
+          python .github/scripts/nvidia_ai.py issue2pr \
+            --title-file /tmp/issue_title.txt \
+            --body-file /tmp/issue_body.txt
+
+      - name: Check for changes
+        id: check
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Create PR
-        if: steps.issue.outcome == 'success'
+        if: steps.check.outputs.has_changes == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

@@ -34,10 +34,19 @@ jobs:
           NVIDIA_FIX_MODEL: ${{ vars.NVIDIA_FIX_MODEL || 'deepseek-ai/deepseek-v4-flash' }}
         run: |
           python .github/scripts/nvidia_ai.py fix \
-            --pr-number ${{ github.event.inputs.pr-number || github.event.pull_request.number || '' }}
+            --pr-number ${{ github.event.inputs.pr-number || github.event.pull_request.number || '' }} || true
+
+      - name: Check for changes
+        id: check
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Commit and push fixes
-        if: steps.fix.outcome == 'success'
+        if: steps.check.outputs.has_changes == 'true'
         run: |
           if [ -n "$(git status --porcelain)" ]; then
             git config user.name "novus-automata[bot]"

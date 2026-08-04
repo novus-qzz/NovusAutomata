@@ -30,8 +30,13 @@ jobs:
         env:
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
         run: |
-          FROM_TAG="${{ github.event.inputs.from-tag }}"
-          TO_TAG="${{ github.event.inputs.to-tag || github.ref_name }}"
+          if [ "${{ github.event_name }}" = "release" ]; then
+            FROM_TAG="$(git tag --sort=-v:refname | head -2 | tail -1)"
+            TO_TAG="${{ github.ref_name }}"
+          else
+            FROM_TAG="${{ github.event.inputs.from-tag }}"
+            TO_TAG="${{ github.event.inputs.to-tag }}"
+          fi
           python .github/scripts/nvidia_ai.py changelog \
             --from-tag "$FROM_TAG" --to-tag "$TO_TAG"
 

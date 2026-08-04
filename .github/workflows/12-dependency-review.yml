@@ -27,15 +27,9 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Get dependency diff
-        id: deps
-        run: |
-          git diff origin/main -- pyproject.toml requirements.txt > dep_diff.txt || true
-          echo "diff=$(cat dep_diff.txt | head -100)" >> $GITHUB_OUTPUT
-
       - name: AI dependency analysis
         env:
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
         run: |
-          python .github/scripts/nvidia_ai.py quality \
+          python .github/scripts/nvidia_ai.py deps \
             --pr-number ${{ github.event.pull_request.number }}
