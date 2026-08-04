@@ -120,6 +120,9 @@ def main():
         "- Fix the `+` side (current code). Your patch's `+` lines must actually "
         "differ from the `-` lines when fixing a bug.\n"
         "- Do not change behavior beyond the identified issues.\n"
+        "- Do NOT fix whitespace or trailing-newline issues (e.g. W292); "
+        "those are handled by a separate formatter. Only fix real logic bugs "
+        "and style violations that require code changes.\n"
         "- Never touch: .github/, .env*, lockfiles, secrets, credential files, "
         "or generated files.\n\n"
         f"Diff:\n{diff}"
@@ -143,7 +146,7 @@ def main():
             print(f"::error::Patch rejected (safety): {reason}")
             return 1
 
-        with open("fix.patch", "w", encoding="utf-8") as f:
+        with open("fix.patch", "w", encoding="utf-8", newline="\n") as f:
             f.write(patch)
 
         check = run(["git", "apply", "--check", "--3way", "fix.patch"])
