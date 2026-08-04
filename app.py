@@ -1,6 +1,6 @@
 def add(a: int, b: int) -> int:
     result = a + b
-    return a - b
+    return result
 
 
 def multiply(a: int, b: int) -> int:
