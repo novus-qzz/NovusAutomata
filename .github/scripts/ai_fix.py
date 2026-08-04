@@ -124,7 +124,8 @@ def main():
         "changes. Do NOT reformat code or touch whitespace / trailing "
         "newlines; those are handled by a separate formatter.\n"
         "- Never touch: .github/, .env*, lockfiles, secrets, credential files, "
-        "or generated files.\n\n"
+        "or generated files.\n"
+        "- If you find NO issues to fix, respond with exactly: NO_ISSUES\n\n"
         f"Diff:\n{diff}"
     )
 
@@ -133,9 +134,13 @@ def main():
         print(f"::notice::AI fix attempt {attempt}/{max_attempts}")
         content = call_llm([
             {"role": "system", "content": "You output only ===FILE blocks with "
-                                          "complete file contents."},
+                                          "complete file contents, or NO_ISSUES."},
             {"role": "user", "content": prompt},
         ])
+
+        if "NO_ISSUES" in content.upper():
+            print("::notice::AI found no issues to fix")
+            return 0
 
         files = extract_files(content)
         if not files:
@@ -148,13 +153,14 @@ def main():
         if not status.stdout.strip():
             print(f"::warning::AI produced no effective changes (no-op, attempt {attempt})")
             if attempt == max_attempts:
-                print(f"::error::No effective fix after {max_attempts} attempts")
+                print("::notice::No effective change produced; treating as no-op")
             continue
 
         print("::notice::AI fix applied successfully")
         return 0
 
-    return 1
+    print("::notice::AI fix did not produce usable output; treating as no-op")
+    return 0
 
 
 if __name__ == "__main__":
