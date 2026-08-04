@@ -1,0 +1,115 @@
+name: "01 CI - Adaptive Lint & Test"
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CACHE_DIRS: |
+    ~/.npm
+    ~/.cache/pip
+    ~/.cache/go-build
+    ~/.cargo/registry
+    ~/.m2/repository
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      language: ${{ steps.detect.outputs.language }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/detect-language
+        id: detect
+
+  lint-test:
+    needs: detect
+    runs-on: ubuntu-latest
+    if: >-
+      needs.detect.outputs.language != 'generic' &&
+      needs.detect.outputs.language != 'static' &&
+      needs.detect.outputs.language != 'docker'
+    env:
+      LANG: ${{ needs.detect.outputs.language }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CACHE_DIRS }}
+          key: ${{ runner.os }}-lint-test-${{ env.LANG }}-${{ hashFiles('**/package-lock.json', '**/pnpm-lock.yaml', '**/yarn.lock', '**/go.sum', '**/Cargo.lock', '**/requirements.txt', '**/poetry.lock', '**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-lint-test-${{ env.LANG }}-
+
+      # ---- Node.js ----
+      - if: env.LANG == 'node'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - if: env.LANG == 'node'
+        run: npm ci || npm install
+      - if: env.LANG == 'node'
+        run: npx --yes eslint .
+      - if: env.LANG == 'node'
+        run: npm test
+
+      # ---- Python ----
+      - if: env.LANG == 'python'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - if: env.LANG == 'python'
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt 2>/dev/null || pip install ruff pytest
+          python -m ruff check .
+          python -m pytest
+
+      # ---- Go ----
+      - if: env.LANG == 'go'
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+          cache: true
+      - if: env.LANG == 'go'
+        run: go vet ./...
+      - if: env.LANG == 'go'
+        run: go test ./...
+
+      # ---- Rust ----
+      - if: env.LANG == 'rust'
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - if: env.LANG == 'rust'
+        run: cargo fmt --check
+      - if: env.LANG == 'rust'
+        run: cargo clippy -- -D warnings
+      - if: env.LANG == 'rust'
+        run: cargo test
+
+      # ---- Java ----
+      - if: env.LANG == 'java'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - if: env.LANG == 'java'
+        run: |
+          if [ -f pom.xml ]; then
+            mvn -B verify
+          else
+            ./gradlew build
+          fi

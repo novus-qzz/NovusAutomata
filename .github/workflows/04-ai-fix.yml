@@ -1,0 +1,50 @@
+name: "04 AI Fix - Auto Commit"
+
+on:
+  workflow_dispatch:
+    inputs:
+      base-ref:
+        description: "Base branch/ref to diff against (e.g. main)"
+        required: false
+        default: "main"
+  pull_request:
+    types: [opened, synchronize]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run AI auto-fix
+        id: fix
+        env:
+          AI_API_KEY: ${{ secrets.AI_REVIEW_API_KEY }}
+          AI_BASE_URL: ${{ vars.AI_REVIEW_BASE_URL || 'https://token.sensenova.cn/v1' }}
+          AI_MODEL: ${{ vars.AI_REVIEW_MODEL_STANDARD || 'sensenova-6.7-flash-lite' }}
+          AI_FIX_BASE_SHA: ${{ github.event.inputs.base-ref || github.event.pull_request.base.sha || 'main' }}
+        run: python .github/scripts/ai_fix.py
+
+      - name: Commit and push fixes
+        if: steps.fix.outcome == 'success'
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git config user.name "novus-qzz[bot]"
+            git config user.email "admin@novus.qzz.io"
+            git add -A
+            git commit -m "chore: AI auto-fix [NovusAutomata]"
+            git push
+            echo "::notice::AI fixes committed and pushed"
+          else
+            echo "::notice::No changes after fix"
+          fi

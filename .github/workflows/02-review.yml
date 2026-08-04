@@ -1,0 +1,58 @@
+name: "02 Review - reviewdog"
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/detect-language
+        id: detect
+
+      # ---- Node.js ----
+      - if: steps.detect.outputs.language == 'node'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - if: steps.detect.outputs.language == 'node'
+        run: npm ci || npm install
+      - if: steps.detect.outputs.language == 'node'
+        uses: reviewdog/action-eslint@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          reporter: github-pr-review
+          fail_on_error: false
+
+      # ---- Python ----
+      - if: steps.detect.outputs.language == 'python'
+        uses: reviewdog/action-ruff@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          reporter: github-pr-review
+          ruff_args: check --select E,F,I,W
+          fail_on_error: false
+
+      # ---- Go ----
+      - if: steps.detect.outputs.language == 'go'
+        uses: reviewdog/action-golangci-lint@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          reporter: github-pr-review
+          fail_on_error: false
+
+      # ---- Rust ----
+      - if: steps.detect.outputs.language == 'rust'
+        uses: reviewdog/action-clippy@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          reporter: github-pr-review
+          fail_on_error: false
