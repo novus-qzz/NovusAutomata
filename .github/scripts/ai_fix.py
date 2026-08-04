@@ -30,9 +30,9 @@ def run(cmd):
 
 def get_diff(base_sha):
     if base_sha:
-        r = run(["git", "diff", base_sha, "--", "."])
+        r = run(["git", "diff", "-U10", base_sha, "--", "."])
     else:
-        r = run(["git", "diff", "--", "."])
+        r = run(["git", "diff", "-U10", "--", "."])
     return r.stdout
 
 
@@ -137,12 +137,12 @@ def main():
     with open("fix.patch", "w", encoding="utf-8") as f:
         f.write(patch)
 
-    check = run(["git", "apply", "--check", "fix.patch"])
+    check = run(["git", "apply", "--check", "--3way", "fix.patch"])
     if check.returncode != 0:
         print(f"::error::Patch does not apply cleanly:\n{check.stderr}")
         return 1
 
-    r = run(["git", "apply", "fix.patch"])
+    r = run(["git", "apply", "--3way", "fix.patch"])
     if r.returncode != 0:
         print(f"::error::Failed to apply patch:\n{r.stderr}")
         return 1
