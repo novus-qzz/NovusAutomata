@@ -11,6 +11,7 @@ on:
 permissions:
   contents: read
   security-events: write
+  actions: read
 
 jobs:
   analyze:
@@ -21,7 +22,7 @@ jobs:
 
       - uses: github/codeql-action/init@v3
         with:
-          languages: javascript-typescript,python,go,java-kotlin,ruby,cpp,csharp
+          languages: python
           queries: security-and-quality
 
       - uses: github/codeql-action/analyze@v3

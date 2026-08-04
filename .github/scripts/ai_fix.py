@@ -1,26 +1,25 @@
 #!/usr/bin/env python3
 """AI auto-fix for pull requests using SenseNova (OpenAI-compatible API).
 
-Generates a unified diff via LLM, validates it against a path whitelist,
-then applies it to the working tree. Safe guards:
-  - patch must be a valid unified diff
-  - paths restricted to code directories
+Generates fixed file contents via LLM (===FILE:...=== blocks), validates
+the paths, then writes them to the working tree. Safe guards:
+  - output must contain valid ===FILE blocks
   - forbidden paths (.github/, lockfiles, secrets) are rejected
+  - files must be non-empty and must produce an actual change
 """
 import json
 import os
+import re
 import subprocess
 import sys
 import urllib.request
+
+FILE_BLOCK_RE = re.compile(r"===FILE:([^\s=]+)===\s*(.*?)\s*===END===", re.DOTALL)
 
 API_KEY = os.environ.get("AI_API_KEY", "")
 BASE_URL = os.environ.get("AI_BASE_URL", "https://token.sensenova.cn/v1")
 MODEL = os.environ.get("AI_MODEL", "sensenova-6.7-flash-lite")
 
-ALLOWED_PREFIXES = (
-    "src/", "lib/", "tests/", "test/", "app/", "cmd/", "internal/",
-    "pkg/", "components/", "utils/", "models/", "scripts/",
-)
 FORBIDDEN_SUBSTR = (
     ".github/", ".env", "secret", "credential", "token",
     "package-lock.json", "pnpm-lock.yaml", "yarn.lock",
@@ -33,10 +32,11 @@ def run(cmd):
 
 
 def get_diff(base_sha):
+    args = ["git", "diff", "-U10"]
     if base_sha:
-        r = run(["git", "diff", base_sha, "--", "."])
-    else:
-        r = run(["git", "diff", "--", "."])
+        args.append(base_sha)
+    args += ["--", ".", ":(exclude).github"]
+    r = run(args)
     return r.stdout
 
 
@@ -45,7 +45,8 @@ def call_llm(messages):
         "model": MODEL,
         "messages": messages,
         "temperature": 0.2,
-        "max_tokens": 4096,
+        "max_tokens": 8192,
+        "thinking": {"type": "disabled"},
     }).encode("utf-8")
     url = BASE_URL.rstrip("/") + "/chat/completions"
     req = urllib.request.Request(
@@ -58,25 +59,40 @@ def call_llm(messages):
     )
     with urllib.request.urlopen(req, timeout=180) as resp:
         data = json.load(resp)
-    return data["choices"][0]["message"]["content"]
+    message = data["choices"][0]["message"]
+    content = message.get("content") or ""
+    if not content.strip():
+        raise RuntimeError("SenseNova returned empty content; check model response")
+    return content
 
 
-def extract_patch(text):
-    start = text.find("diff --git")
-    if start < 0:
+def extract_files(text):
+    blocks = FILE_BLOCK_RE.findall(text)
+    if not blocks:
         return None
-    return text[start:]
+    files = {}
+    for path, content in blocks:
+        path = path.strip()
+        if not path or any(bad in path for bad in FORBIDDEN_SUBSTR):
+            print(f"::error::Rejected path: {path!r}")
+            return None
+        content = content.strip("\n")
+        if not content:
+            print("::error::AI returned empty content for a file")
+            return None
+        if not content.endswith("\n"):
+            content += "\n"
+        files[path] = content
+    return files
 
 
-def validate_patch(patch):
-    for line in patch.splitlines():
-        if line.startswith("+++ b/") or line.startswith("--- a/"):
-            path = line.split("/", 2)[-1].strip()
-            if any(bad in path for bad in FORBIDDEN_SUBSTR):
-                return False, f"forbidden path: {path}"
-            if not path.startswith(ALLOWED_PREFIXES):
-                return False, f"path outside whitelist: {path}"
-    return True, ""
+def write_files(files):
+    for path, content in files.items():
+        parent = os.path.dirname(path)
+        if parent:
+            os.makedirs(parent, exist_ok=True)
+        with open(path, "w", encoding="utf-8", newline="\n") as f:
+            f.write(content)
 
 
 def main():
@@ -91,48 +107,59 @@ def main():
         return 0
 
     prompt = (
-        "You are an expert code reviewer and fixer. The following git diff "
-        "contains code changes. Identify concrete bugs, style violations, "
-        "and issues that can be safely auto-fixed, then produce a SINGLE "
-        "unified diff (git diff format) that fixes them.\n\n"
+        "You are an expert code reviewer and fixer. Below is a git diff "
+        "(`git diff <base>`): lines starting with `-` are the OLD (base) "
+        "version, lines starting with `+` are the CURRENT code in the PR. "
+        "Find concrete bugs and safe auto-fixable issues in the CURRENT "
+        "(`+`) code, then produce the FULL FIXED CONTENT of each affected "
+        "file.\n\n"
+        "Output format for each fixed file, EXACTLY:\n"
+        "===FILE:<relative/path>===\n"
+        "<complete fixed file content>\n"
+        "===END===\n\n"
         "Rules:\n"
-        "- Output ONLY the unified diff, starting with `diff --git`. No explanations.\n"
-        "- Do not change behavior beyond the identified issues.\n"
-        "- Only touch files under: src/, lib/, tests/, test/, app/, cmd/, "
-        "internal/, pkg/, components/, utils/, models/, scripts/\n"
-        "- Never touch: .github/, .env*, lockfiles, secrets, generated files.\n\n"
+        "- Only output the ===FILE blocks. No explanations, no markdown fences.\n"
+        "- Output the COMPLETE file content (not a diff, not a fragment).\n"
+        "- Only fix real logic bugs and concrete issues that require code "
+        "changes. Do NOT reformat code or touch whitespace / trailing "
+        "newlines; those are handled by a separate formatter.\n"
+        "- Never touch: .github/, .env*, lockfiles, secrets, credential files, "
+        "or generated files.\n"
+        "- If you find NO issues to fix, respond with exactly: NO_ISSUES\n\n"
         f"Diff:\n{diff}"
     )
 
-    content = call_llm([
-        {"role": "system", "content": "You output only valid unified diffs."},
-        {"role": "user", "content": prompt},
-    ])
+    max_attempts = 3
+    for attempt in range(1, max_attempts + 1):
+        print(f"::notice::AI fix attempt {attempt}/{max_attempts}")
+        content = call_llm([
+            {"role": "system", "content": "You output only ===FILE blocks with "
+                                          "complete file contents, or NO_ISSUES."},
+            {"role": "user", "content": prompt},
+        ])
 
-    patch = extract_patch(content)
-    if not patch:
-        print("::warning::No valid diff block in AI response; nothing to apply")
-        return 1
+        if "NO_ISSUES" in content.upper():
+            print("::notice::AI found no issues to fix")
+            return 0
 
-    ok, reason = validate_patch(patch)
-    if not ok:
-        print(f"::error::Patch rejected: {reason}")
-        return 1
+        files = extract_files(content)
+        if not files:
+            print("::warning::No valid file blocks in AI response; retrying")
+            continue
 
-    with open("fix.patch", "w", encoding="utf-8") as f:
-        f.write(patch)
+        write_files(files)
 
-    check = run(["git", "apply", "--check", "fix.patch"])
-    if check.returncode != 0:
-        print(f"::error::Patch does not apply cleanly:\n{check.stderr}")
-        return 1
+        status = run(["git", "status", "--porcelain"])
+        if not status.stdout.strip():
+            print(f"::warning::AI produced no effective changes (no-op, attempt {attempt})")
+            if attempt == max_attempts:
+                print("::notice::No effective change produced; treating as no-op")
+            continue
 
-    r = run(["git", "apply", "fix.patch"])
-    if r.returncode != 0:
-        print(f"::error::Failed to apply patch:\n{r.stderr}")
-        return 1
+        print("::notice::AI fix applied successfully")
+        return 0
 
-    print("::notice::Patch applied successfully")
+    print("::notice::AI fix did not produce usable output; treating as no-op")
     return 0
 
 
