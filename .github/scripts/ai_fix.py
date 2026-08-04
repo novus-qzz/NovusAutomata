@@ -132,7 +132,8 @@ def main():
     for attempt in range(1, max_attempts + 1):
         print(f"::notice::AI fix attempt {attempt}/{max_attempts}")
         content = call_llm([
-            {"role": "system", "content": "You output only ===FILE blocks with complete file contents."},
+            {"role": "system", "content": "You output only ===FILE blocks with "
+                                          "complete file contents."},
             {"role": "user", "content": prompt},
         ])
 
