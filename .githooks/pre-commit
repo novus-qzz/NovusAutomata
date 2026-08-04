@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# AI pre-commit hook: fast local checks before every commit.
+# To enable:  git config core.hooksPath .githooks
+set -euo pipefail
+
+echo "🔍 AI pre-commit checks..."
+
+# 1. Reject common accidental secrets.
+if git diff --cached --name-only | grep -E '(^|/)(\.env|\.env\..*|.*secret.*|.*credential.*|.*token.*|.*\.pem)$' >/dev/null 2>&1; then
+  echo "❌ Refusing to commit potentially sensitive files:"
+  git diff --cached --name-only | grep -E '(^|/)(\.env|\.env\..*|.*secret.*|.*credential.*|.*token.*|.*\.pem)$'
+  exit 1
+fi
+
+# 2. Run pre-commit (ruff, mypy, etc.) when available.
+if command -v pre-commit >/dev/null 2>&1 && [ -f .pre-commit-config.yaml ]; then
+  pre-commit run --hook-stage pre-commit
+fi
+
+# 3. Commit message lint on the staged message via commitlint when available.
+if command -v python >/dev/null 2>&1; then
+  python -m ai_workflow commitlint || echo "⚠️ commitlint failed — review commit messages."
+fi
+
+echo "✅ Pre-commit checks passed."

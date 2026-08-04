@@ -1,0 +1,38 @@
+name: "19 AI - Commit Lint"
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  commitlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: AI Commit Lint
+        run: |
+          python -m ai_workflow commitlint
+        continue-on-error: true
+
+      - name: Post violation comment
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python -m ai_workflow commitlint | tee /tmp/commitlint.out || true
+          BODY="## AI Commit Message Check\n\nFound violations:\n\`\`\`\n$(cat /tmp/commitlint.out)\n\`\`\`\n\nPlease fix commit messages to follow Conventional Commits."
+          python - <<'EOF'
+          import json, os
+          body = open("/tmp/commitlint.out").read()
+          print("::error::" + body)
+          EOF

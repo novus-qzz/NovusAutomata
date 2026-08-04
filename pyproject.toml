@@ -1,0 +1,66 @@
+[project]
+name = "novusautomata"
+version = "0.2.0"
+description = "NovusAutomata - AI-powered Git workflow automation"
+requires-python = ">=3.10"
+authors = [{ name = "novus-qzz" }]
+
+[project.scripts]
+ai-workflow = "ai_workflow.__main__:main"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+exclude = [".github", "scripts"]
+
+[tool.ruff.lint]
+select = [
+    "E", "F", "W", "I",
+    "D", "N", "ANN",
+    "UP", "SIM", "PT", "ARG", "RUF",
+    "B", "C4", "RET", "TCH", "FURB",
+]
+ignore = ["D100", "D104"]
+fixable = ["ALL"]
+unfixable = []
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D", "ANN", "ARG"]
+"ai_workflow/commands/*" = ["ARG001"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+docstring-code-format = true
+docstring-code-line-length = "dynamic"
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+ignore_missing_imports = true
+disallow_untyped_defs = true
+disallow_any_unimported = false
+warn_unused_ignores = true
+warn_redundant_casts = true
+no_implicit_optional = true
+check_untyped_defs = true
+exclude = ["scripts"]
+
+[[tool.mypy.overrides]]
+module = "ai_workflow.commands.*"
+disable_error_code = ["type-arg", "attr-defined", "call-overload", "dict-item"]
+
+[[tool.mypy.overrides]]
+module = "ai_workflow.gh_utils"
+disable_error_code = ["no-any-return"]
+
+[[tool.mypy.overrides]]
+module = "ai_workflow.core"
+disable_error_code = ["no-any-return"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"

@@ -1,0 +1,14 @@
+#!/usr/bin/env python3
+"""NovusAutomata AI workflow CLI entry point.
+
+Install as a console script via pip:
+    pip install -e .
+
+Then run:
+    ai-workflow review --pr-number 123
+"""
+
+from ai_workflow.__main__ import main
+
+if __name__ == "__main__":
+    raise SystemExit(main())

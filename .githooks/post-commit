@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# AI post-commit hook: optional, non-blocking suggestions after each commit.
+set -u
+
+echo "🤖 Post-commit AI suggestions (non-blocking)..."
+
+# Suggest running the AI fixer after a commit when the diff had issues.
+if command -v python >/dev/null 2>&1; then
+  python -m ai_workflow simplify >/tmp/ai-simplify.txt 2>/dev/null && \
+    echo "💡 Try: python -m ai_workflow simplify  (see /tmp/ai-simplify.txt)" || true
+fi
+
+exit 0

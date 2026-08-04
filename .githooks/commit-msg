@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# AI commit-msg hook: validate Conventional Commits format.
+# $1 = the commit message file.
+set -euo pipefail
+
+MSG_FILE="${1:-}"
+
+# Provide a fallback if the repo's core.hooksPath is not set to .githooks.
+if [ -z "$MSG_FILE" ] || [ ! -f "$MSG_FILE" ]; then
+  MSG_FILE="$(git rev-parse --git-dir)/COMMIT_EDITMSG"
+fi
+
+if [ ! -f "$MSG_FILE" ]; then
+  echo "⚠️ commit-msg: no message file; skipping."
+  exit 0
+fi
+
+FIRST_LINE="$(head -n1 "$MSG_FILE")"
+if ! echo "$FIRST_LINE" | grep -qE '^(feat|fix|chore|docs|refactor|test|style|perf|ci|build|revert)(\([^)]+\))?!?: .+$'; then
+  echo "❌ Commit message does not follow Conventional Commits:"
+  echo "   $FIRST_LINE"
+  echo ""
+  echo "   Expected format: <type>(<scope>): <description>"
+  echo "   Types: feat, fix, chore, docs, refactor, test, style, perf, ci, build, revert"
+  echo ""
+  echo "   Example: feat(api): add health check endpoint"
+  exit 1
+fi
+
+if [ "${#FIRST_LINE}" -gt 72 ]; then
+  echo "❌ Commit subject is ${#FIRST_LINE} characters (max 72)."
+  exit 1
+fi
+
+echo "✅ Commit message is conventional."
+exit 0

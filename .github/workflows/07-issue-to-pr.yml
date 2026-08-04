@@ -1,0 +1,39 @@
+name: "07 AI - Issue to PR"
+on:
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      issue-number:
+        description: "Issue number"
+        required: true
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  convert:
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.label.name, 'ai-ready') ||
+      contains(github.event.label.name, 'auto-fix')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: AI Issue to PR
+        env:
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          NVIDIA_FIX_MODEL: ${{ vars.NVIDIA_FIX_MODEL || 'deepseek-ai/deepseek-v4-flash' }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python -m ai_workflow issue2pr \
+            --issue-number ${{ github.event.inputs.issue-number || github.event.issue.number }}

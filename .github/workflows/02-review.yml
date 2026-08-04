@@ -1,0 +1,40 @@
+name: "02 Lint - reviewdog"
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      language: ${{ steps.detect.outputs.language }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/detect-language
+        id: detect
+
+  reviewdog:
+    needs: detect
+    runs-on: ubuntu-latest
+    env:
+      LANG: ${{ needs.detect.outputs.language }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: reviewdog/action-setup@v1
+
+      - name: Ruff reviewdog
+        if: env.LANG == 'python'
+        uses: reviewdog/action-setup@v1
+
+      - if: env.LANG == 'python'
+        run: |
+          pip install ruff
+          reviewdog -reporter=github-pr-check -level=warning \
+            -filter-mode=nofilter ruff check .
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}

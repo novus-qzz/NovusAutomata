@@ -1,0 +1,38 @@
+name: "20 AI - Code Health"
+on:
+  schedule:
+    - cron: "0 6 1 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: AI Code Health Report
+        id: health
+        env:
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          NVIDIA_SECURITY_MODEL: ${{ vars.NVIDIA_SECURITY_MODEL || 'deepseek-ai/deepseek-v4-pro' }}
+        run: |
+          python -m ai_workflow health > /tmp/health-report.md
+
+      - name: Create health report issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create \
+            --title "Code Health Report - $(date +%Y-%m)" \
+            --label "code-health" \
+            --body "$(cat /tmp/health-report.md)" || true

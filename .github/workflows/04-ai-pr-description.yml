@@ -1,0 +1,34 @@
+name: "04 AI - PR Description"
+on:
+  pull_request:
+    types: [opened]
+  workflow_dispatch:
+    inputs:
+      pr-number:
+        description: "PR number"
+        required: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  describe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: AI PR Description
+        env:
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          NVIDIA_FIX_MODEL: ${{ vars.NVIDIA_FIX_MODEL || 'deepseek-ai/deepseek-v4-flash' }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python -m ai_workflow describe \
+            --pr-number ${{ github.event.inputs.pr-number || github.event.pull_request.number }}

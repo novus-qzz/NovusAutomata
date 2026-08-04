@@ -1,0 +1,40 @@
+name: "16 AI - README Sync"
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  readme:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: AI README Sync
+        env:
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          NVIDIA_GENERIC_MODEL: ${{ vars.NVIDIA_GENERIC_MODEL || 'deepseek-ai/deepseek-v4-flash' }}
+        run: |
+          python -m ai_workflow readme
+
+      - name: Commit README updates
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git config user.name "novus-automata[bot]"
+            git config user.email "bot@novusautomata.dev"
+            git add README.md
+            git commit -m "docs: AI README sync [NovusAutomata]" || true
+            git push origin main || true
+          else
+            echo "::notice::README is up to date"
+          fi

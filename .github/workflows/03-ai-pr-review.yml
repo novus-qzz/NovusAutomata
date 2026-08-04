@@ -1,0 +1,35 @@
+name: "03 AI - PR Review"
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      pr-number:
+        description: "PR number to review"
+        required: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: AI PR Review
+        env:
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          NVIDIA_REVIEW_MODEL: ${{ vars.NVIDIA_REVIEW_MODEL || 'deepseek-ai/deepseek-v4-pro' }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          pip install -q ruff pytest 2>/dev/null || true
+          python -m ai_workflow review \
+            --pr-number ${{ github.event.inputs.pr-number || github.event.pull_request.number }}
