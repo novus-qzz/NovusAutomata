@@ -37,7 +37,7 @@ POLL_INTERVAL = 10
 TIMEOUT_PER_ITER = 900
 RETRY_PUSH = 40
 RETRY_PUSH_WAIT = 10
-RETRY_GH = 5
+RETRY_GH = 15
 
 CORRECT = (
     "def add(a: int, b: int) -> int:\n"
@@ -161,7 +161,7 @@ def trigger_04(base_sha):
         )
         if r.returncode == 0:
             return True
-        time.sleep(5)
+        time.sleep(8)
     return False
 
 
@@ -235,12 +235,11 @@ def main():
         bug_sha, base_sha = info
         print(f"  pushed bug {bug_sha[:8]} ({bug_desc})", flush=True)
 
-        if not trigger_04(base_sha):
-            print(f"  [iter {i}] 04 trigger failed", flush=True)
-            results[i] = {"iter": i, "status": "trigger_failed", "bug": bug_desc}
-            save_log(results[i])
-            continue
-        print(f"  04 triggered", flush=True)
+        triggered = trigger_04(base_sha)
+        if not triggered:
+            print(f"  [iter {i}] 04 dispatch failed; push-triggered run will fire", flush=True)
+        else:
+            print(f"  04 triggered (dispatch)", flush=True)
 
         ok = None
         deadline = time.time() + TIMEOUT_PER_ITER
@@ -253,8 +252,7 @@ def main():
                 try:
                     runs = json.loads(r.stdout)
                     for rn in runs:
-                        if (rn.get("headSha") == bug_sha
-                                and rn.get("event") == "workflow_dispatch"):
+                        if rn.get("headSha") == bug_sha:
                             if rn.get("status") == "completed":
                                 ok = rn.get("conclusion") == "success"
                                 break
