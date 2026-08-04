@@ -273,7 +273,13 @@ def main():
             print(f"  [iter {i}] 04 failed to fix", flush=True)
             continue
 
-        git("fetch", "origin", "main")
+        for fetch_attempt in range(5):
+            git("fetch", "origin", "main")
+            r = git("rev-parse", "origin/main")
+            remote_head = r.stdout.strip()
+            if remote_head != bug_sha:
+                break
+            time.sleep(3)
         git("reset", "--hard", "origin/main")
         pass_, err = verify()
         status = "verified" if pass_ else "verify_failed"
