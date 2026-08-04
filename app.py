@@ -8,4 +8,4 @@ def multiply(a: int, b: int) -> int:
 
 
 def greet(name: str) -> str:
-    return f"Hello, {name}"
+    return f"Hello, {name}!"
