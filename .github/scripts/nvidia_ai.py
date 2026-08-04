@@ -474,6 +474,167 @@ def cmd_deps(args: argparse.Namespace) -> int:
     return 0 if result else 1
 
 
+def cmd_gentest(args: argparse.Namespace) -> int:
+    """Generate tests for new/changed code."""
+    diff = get_pr_diff(args.pr_number) if args.pr_number else get_git_diff()
+    if not diff.strip():
+        print("No diff to generate tests for")
+        return 0
+    system_prompt = (
+        "You are a QA engineer. Generate pytest test cases for the code changes in the diff. "
+        "Output each test file in this exact format:\n"
+        "===FILE:tests/test_<name>.py===\n<test code>\n===END===\n"
+        "Include: happy path, edge cases, error conditions. "
+        "Follow the existing test patterns in the codebase."
+    )
+    result = call_nvidia(MODEL_FIX, system_prompt, f"Generate tests for this diff:\n\n{diff}")
+    if not result:
+        return 1
+    write_fix_files(result, backup=False)
+    test_result = subprocess.run(
+        [sys.executable, "-m", "pytest"], capture_output=True, text=True, timeout=60
+    )
+    print(test_result.stdout)
+    if test_result.returncode != 0:
+        print("Generated tests have failures, attempting fix...", file=sys.stderr)
+        result2 = call_nvidia(
+            MODEL_FIX,
+            "Fix the failing tests. Make all tests pass.",
+            f"Test output:\n{test_result.stdout}\n{test_result.stderr}",
+        )
+        if result2:
+            write_fix_files(result2, backup=False)
+    return 0
+
+
+def cmd_securix(args: argparse.Namespace) -> int:
+    """Auto-fix security issues found by security scanners."""
+    tool = args.tool or "bandit"
+    report = args.report or ""
+    if args.report_file:
+        with open(args.report_file) as f:
+            report = f.read().strip()
+    if not report:
+        print("No security report provided")
+        return 1
+    system_prompt = (
+        "You are a security engineer. Fix the security vulnerabilities reported below. "
+        "Output each file change in this exact format:\n"
+        "===FILE:path/to/file.py===\n<fixed code>\n===END===\n"
+        "Only output files that need changes. Explain each fix."
+    )
+    result = call_nvidia(
+        MODEL_QUALITY, system_prompt, f"Security tool: {tool}\n\nReport:\n{report}"
+    )
+    if not result:
+        return 1
+    write_fix_files(result)
+    test_result = subprocess.run(
+        [sys.executable, "-m", "pytest"], capture_output=True, text=True, timeout=60
+    )
+    print(test_result.stdout)
+    return 0
+
+
+def cmd_commitlint(args: argparse.Namespace) -> int:
+    """Validate and fix commit messages for Conventional Commits."""
+    commits = gh_run("pr", "commits", str(args.pr_number)) if args.pr_number else ""
+    if not commits:
+        commits = subprocess.run(
+            ["git", "log", "--oneline", "-5"], capture_output=True, text=True, timeout=30
+        ).stdout
+    system_prompt = (
+        "You are a commit message linter. Check each message for Conventional Commits format: "
+        "<type>(<scope>): <description>. "
+        "Valid types: feat, fix, chore, docs, refactor, test, style, perf, ci. "
+        "For each invalid commit, provide the corrected version. Output as markdown."
+    )
+    result = call_nvidia(MODEL_TRIAGE, system_prompt, f"Commits:\n\n{commits}")
+    if result:
+        print(result)
+        if args.pr_number:
+            gh_run("pr", "comment", str(args.pr_number), "--body", f"## Commit Lint\n\n{result}")
+        return 0
+    return 1
+
+
+def cmd_health(args: argparse.Namespace) -> int:
+    """Generate a monthly code health report."""
+    system_prompt = (
+        "You are a code quality analyst. Generate a monthly code health report based on the data. "
+        "Format as markdown with sections: Overview, Complexity Trends, Test Coverage, "
+        "Technical Debt, Top Recommendations."
+    )
+    stats = subprocess.run(
+        ["git", "diff", "--shortstat", "@{1 month ago}"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    log = get_commit_log(since="1 month ago")
+    result = call_nvidia(
+        MODEL_QUALITY,
+        system_prompt,
+        f"## Code Changes (last month)\n{stats.stdout}\n\n## Commits\n{log}",
+    )
+    if result:
+        title = f"Code Health Report ({args.month or 'current'})"
+        gh_run("issue", "create", "--title", title, "--label", "health-report", "--body", result)
+        print("Health report created")
+        return 0
+    return 1
+
+
+def cmd_assign(args: argparse.Namespace) -> int:
+    """Suggest PR reviewers based on code changes."""
+    pr_num = args.pr_number
+    files = gh_run("pr", "diff", str(pr_num), "--name-only")
+    if not files:
+        print("No files to analyze")
+        return 1
+    system_prompt = (
+        "You are a code ownership expert. Based on the changed files, suggest the best reviewer(s) "
+        "from the team. Consider: file ownership, expertise area, current workload. "
+        'Output a JSON object: {"reviewers": ["user1"], "reason": "..."}'
+    )
+    result = call_nvidia(MODEL_TRIAGE, system_prompt, f"Changed files:\n{files}")
+    if result:
+        data = parse_json_from_llm(result)
+        if data and data.get("reviewers"):
+            reviewers = ",".join(data["reviewers"])
+            gh_run("pr", "edit", str(pr_num), "--add-reviewer", reviewers)
+            print(f"Suggested reviewers: {reviewers}")
+        gh_run("pr", "comment", str(pr_num), "--body", f"## Reviewer Suggestion\n\n{result}")
+        return 0
+    return 1
+
+
+def cmd_welcome(args: argparse.Namespace) -> int:
+    """Send a welcome message to first-time contributors."""
+    pr_num = args.pr_number
+    author = gh_run("pr", "view", str(pr_num), "--json", "author", "--jq", ".author.login")
+    if not author:
+        return 1
+    all_prs = gh_run(
+        "pr", "list", "--author", author, "--state", "all", "--json", "number", "--jq", "length"
+    )
+    if all_prs and int(all_prs) > 1:
+        print(f"{author} is not a first-time contributor ({all_prs} PRs)")
+        return 0
+    system_prompt = (
+        "You are a friendly open-source community manager. Write a warm welcome message "
+        "for a first-time contributor. Include: thank them, provide useful links "
+        "(CONTRIBUTING.md, CLAUDE.md), encourage questions, and express appreciation. "
+        "Keep it warm but professional."
+    )
+    result = call_nvidia(MODEL_FIX, system_prompt, f"Welcome first-time contributor @{author}!")
+    if result:
+        gh_run("pr", "comment", str(pr_num), "--body", result)
+        print(f"Welcome message sent to @{author}")
+        return 0
+    return 1
+
+
 def cmd_changelog(args: argparse.Namespace) -> int:
     """Generate a CHANGELOG entry from git log."""
     from_tag = args.from_tag
@@ -686,6 +847,26 @@ def main() -> int:
     p_simplify = sub.add_parser("simplify", help="Suggest code simplifications")
     p_simplify.add_argument("--diff")
 
+    p_gentest = sub.add_parser("gentest", help="Generate tests for PR diff")
+    p_gentest.add_argument("--pr-number", type=int)
+
+    p_securix = sub.add_parser("securix", help="Auto-fix security issues")
+    p_securix.add_argument("--tool", default="")
+    p_securix.add_argument("--report", default="")
+    p_securix.add_argument("--report-file", default="")
+
+    p_commitlint = sub.add_parser("commitlint", help="Lint commit messages")
+    p_commitlint.add_argument("--pr-number", type=int)
+
+    p_health = sub.add_parser("health", help="Monthly code health report")
+    p_health.add_argument("--month", default="")
+
+    p_assign = sub.add_parser("assign", help="Suggest PR reviewers")
+    p_assign.add_argument("--pr-number", type=int, required=True)
+
+    p_welcome = sub.add_parser("welcome", help="Welcome first-time contributors")
+    p_welcome.add_argument("--pr-number", type=int, required=True)
+
     p_changelog = sub.add_parser("changelog", help="Generate CHANGELOG")
     p_changelog.add_argument("--from-tag", required=True)
     p_changelog.add_argument("--to-tag", required=True)
@@ -707,6 +888,12 @@ def main() -> int:
         "fix": cmd_fix,
         "issue2pr": cmd_issue2pr,
         "deps": cmd_deps,
+        "gentest": cmd_gentest,
+        "securix": cmd_securix,
+        "commitlint": cmd_commitlint,
+        "health": cmd_health,
+        "assign": cmd_assign,
+        "welcome": cmd_welcome,
         "triage": cmd_triage,
         "respond": cmd_respond,
         "quality": cmd_quality,

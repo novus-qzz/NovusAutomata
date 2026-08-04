@@ -1,0 +1,61 @@
+name: "18 AI - Security Auto-Fix"
+on:
+  workflow_dispatch:
+    inputs:
+      tool:
+        description: "Security tool (bandit/gitleaks)"
+        required: true
+        default: "bandit"
+      report:
+        description: "Security report text"
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  securix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Fix security issues
+        env:
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        run: |
+          echo "${{ github.event.inputs.report }}" > /tmp/security_report.txt
+          python .github/scripts/nvidia_ai.py securix \
+            --tool "${{ github.event.inputs.tool }}" \
+            --report-file /tmp/security_report.txt
+
+      - name: Check for changes
+        id: check
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create PR with fixes
+        if: steps.check.outputs.has_changes == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          BRANCH="fix/security-$(date +%Y%m%d%H%M%S)"
+          git checkout -b "$BRANCH"
+          git add -A
+          git commit -m "fix: auto-fix security issues from ${{ github.event.inputs.tool }}"
+          git push origin "$BRANCH"
+          gh pr create \
+            --title "fix: auto-fix security issues from ${{ github.event.inputs.tool }}" \
+            --body "Auto-generated PR to fix security vulnerabilities found by ${{ github.event.inputs.tool }}." \
+            --head "$BRANCH" \
+            --label "security,ai-generated"
