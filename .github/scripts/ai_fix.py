@@ -125,44 +125,55 @@ def main():
         f"Diff:\n{diff}"
     )
 
-    content = call_llm([
-        {"role": "system", "content": "You output only valid unified diffs."},
-        {"role": "user", "content": prompt},
-    ])
+    max_attempts = 3
+    for attempt in range(1, max_attempts + 1):
+        print(f"::notice::AI fix attempt {attempt}/{max_attempts}")
+        content = call_llm([
+            {"role": "system", "content": "You output only valid unified diffs."},
+            {"role": "user", "content": prompt},
+        ])
 
-    patch = extract_patch(content)
-    if not patch:
-        print("::warning::No valid diff block in AI response; nothing to apply")
-        return 1
+        patch = extract_patch(content)
+        if not patch:
+            print("::warning::No valid diff block in AI response; retrying")
+            continue
 
-    ok, reason = validate_patch(patch)
-    if not ok:
-        print(f"::error::Patch rejected: {reason}")
-        return 1
+        ok, reason = validate_patch(patch)
+        if not ok:
+            print(f"::error::Patch rejected (safety): {reason}")
+            return 1
 
-    with open("fix.patch", "w", encoding="utf-8") as f:
-        f.write(patch)
+        with open("fix.patch", "w", encoding="utf-8") as f:
+            f.write(patch)
 
-    check = run(["git", "apply", "--check", "--3way", "fix.patch"])
-    if check.returncode != 0:
-        print(f"::error::Patch does not apply cleanly:\n{check.stderr}")
-        return 1
+        check = run(["git", "apply", "--check", "--3way", "fix.patch"])
+        if check.returncode != 0:
+            print(f"::warning::Patch does not apply cleanly (attempt {attempt}):\n{check.stderr}")
+            if attempt == max_attempts:
+                print(f"::error::Patch failed after {max_attempts} attempts")
+            continue
 
-    r = run(["git", "apply", "--3way", "fix.patch"])
-    if r.returncode != 0:
-        print(f"::error::Failed to apply patch:\n{r.stderr}")
-        return 1
+        r = run(["git", "apply", "--3way", "fix.patch"])
+        if r.returncode != 0:
+            print(f"::warning::Failed to apply patch (attempt {attempt}):\n{r.stderr}")
+            if attempt == max_attempts:
+                print(f"::error::Patch failed after {max_attempts} attempts")
+            continue
 
-    status = run(["git", "status", "--porcelain"])
-    if not status.stdout.strip():
-        print("::error::AI produced no effective changes (no-op patch)")
-        return 1
+        status = run(["git", "status", "--porcelain"])
+        if not status.stdout.strip():
+            print(f"::warning::AI produced no effective changes (no-op patch, attempt {attempt})")
+            if attempt == max_attempts:
+                print(f"::error::No effective fix after {max_attempts} attempts")
+            continue
 
-    if os.path.exists("fix.patch"):
-        os.remove("fix.patch")
+        if os.path.exists("fix.patch"):
+            os.remove("fix.patch")
 
-    print("::notice::Patch applied successfully")
-    return 0
+        print("::notice::Patch applied successfully")
+        return 0
+
+    return 1
 
 
 if __name__ == "__main__":
