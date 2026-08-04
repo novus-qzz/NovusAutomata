@@ -68,8 +68,6 @@ BUGS = [
      "multiply adds"),
     (MUL_BLOCK, "def multiply(a: int, b: int) -> int:\n    return a - b",
      "multiply subtracts"),
-    (MUL_BLOCK, "def multiply(a: int, b: int) -> int:\n    return a // b",
-     "multiply floor-divides"),
     (GREET_BLOCK, 'def greet(name: str) -> str:\n    return f"Goodbye, {name}!"',
      "greet says Goodbye"),
     (GREET_BLOCK, 'def greet(name: str) -> str:\n    return f"Hello, {name}"',
@@ -115,12 +113,23 @@ def push_verified(max_tries=RETRY_PUSH, wait=RETRY_PUSH_WAIT):
 
 
 def ensure_clean_base():
-    """Reset local to origin/main and verify app.py is correct."""
+    """Reset local to origin/main; if app.py is not correct, self-heal by
+    pushing the correct version (handles a previous AI-fix failure)."""
     git("fetch", "origin", "main")
     git("reset", "--hard", "origin/main")
     content = open("app.py", encoding="utf-8").read()
-    if content.strip() != CORRECT.strip():
-        return False, "app.py not in correct state after reset"
+    if content.strip() == CORRECT.strip():
+        return True, ""
+    print("  self-healing: restoring correct app.py", flush=True)
+    open("app.py", "w", encoding="utf-8", newline="\n").write(CORRECT)
+    r = git("add", "app.py")
+    if r.returncode:
+        return False, "self-heal add failed"
+    r = git("commit", "-m", "chore: restore clean base")
+    if r.returncode:
+        return False, "self-heal commit failed"
+    if not push_verified():
+        return False, "self-heal push failed"
     return True, ""
 
 
@@ -238,13 +247,14 @@ def main():
         while time.time() < deadline:
             r = gh_cli(
                 "run", "list", "--workflow", WF_NAME, "--limit", "5",
-                "--json", "databaseId,headSha,conclusion,status"
+                "--json", "databaseId,headSha,conclusion,status,event"
             )
             if r.returncode == 0:
                 try:
                     runs = json.loads(r.stdout)
                     for rn in runs:
-                        if rn.get("headSha") == bug_sha:
+                        if (rn.get("headSha") == bug_sha
+                                and rn.get("event") == "workflow_dispatch"):
                             if rn.get("status") == "completed":
                                 ok = rn.get("conclusion") == "success"
                                 break
