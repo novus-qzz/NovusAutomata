@@ -29,10 +29,11 @@ def run(cmd):
 
 
 def get_diff(base_sha):
+    args = ["git", "diff", "-U10"]
     if base_sha:
-        r = run(["git", "diff", "-U10", base_sha, "--", "."])
-    else:
-        r = run(["git", "diff", "-U10", "--", "."])
+        args.append(base_sha)
+    args += ["--", ".", ":(exclude).github"]
+    r = run(args)
     return r.stdout
 
 
@@ -107,12 +108,17 @@ def main():
         return 0
 
     prompt = (
-        "You are an expert code reviewer and fixer. The following git diff "
-        "contains code changes. Identify concrete bugs, style violations, "
-        "and issues that can be safely auto-fixed, then produce a SINGLE "
-        "unified diff (git diff format) that fixes them.\n\n"
+        "You are an expert code reviewer and fixer. Below is a git diff "
+        "(`git diff <base>`): lines starting with `-` are the OLD version, "
+        "lines starting with `+` are the CURRENT code in the PR. "
+        "Find concrete bugs, style violations, and safe auto-fixable issues "
+        "in the CURRENT (`+`) code, then produce a SINGLE unified diff that "
+        "fixes them.\n\n"
         "Rules:\n"
-        "- Output ONLY the unified diff, starting with `diff --git`. No explanations.\n"
+        "- Output ONLY the unified diff, starting with `diff --git`. No explanations, "
+        "no markdown fences.\n"
+        "- Fix the `+` side (current code). Your patch's `+` lines must actually "
+        "differ from the `-` lines when fixing a bug.\n"
         "- Do not change behavior beyond the identified issues.\n"
         "- Never touch: .github/, .env*, lockfiles, secrets, credential files, "
         "or generated files.\n\n"
@@ -145,6 +151,11 @@ def main():
     r = run(["git", "apply", "--3way", "fix.patch"])
     if r.returncode != 0:
         print(f"::error::Failed to apply patch:\n{r.stderr}")
+        return 1
+
+    status = run(["git", "status", "--porcelain"])
+    if not status.stdout.strip():
+        print("::error::AI produced no effective changes (no-op patch)")
         return 1
 
     if os.path.exists("fix.patch"):
