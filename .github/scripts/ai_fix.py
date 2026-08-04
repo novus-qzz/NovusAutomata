@@ -57,7 +57,7 @@ def call_llm(messages):
             "Content-Type": "application/json",
         },
     )
-    with urllib.request.urlopen(req, timeout=180) as resp:
+    with urllib.request.urlopen(req, timeout=180) as resp:  # nosec B310 - only HTTPS API endpoint
         data = json.load(resp)
     message = data["choices"][0]["message"]
     content = message.get("content") or ""
