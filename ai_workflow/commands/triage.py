@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from ai_workflow.core import extract_json
 from ai_workflow.gh_utils import GHClient, GHError
@@ -67,12 +67,12 @@ def run(args: argparse.Namespace, config: Config, ai: AIProvider) -> int:
     try:
         data = extract_json(result or "{}")
         triage = TriageResult(
-            labels=data.get("labels", []),  # type: ignore[arg-type]
-            priority=data.get("priority", "medium"),  # type: ignore[arg-type]
-            complexity=data.get("complexity", "medium"),  # type: ignore[arg-type]
+            labels=cast("list[str]", data.get("labels", [])),
+            priority=cast("str", data.get("priority", "medium")),
+            complexity=cast("str", data.get("complexity", "medium")),
             is_duplicate=bool(data.get("is_duplicate", False)),
             needs_more_info=bool(data.get("needs_more_info", False)),
-            summary=data.get("summary", ""),  # type: ignore[arg-type]
+            summary=cast("str", data.get("summary", "")),
         )
     except json.JSONDecodeError as exc:
         logger.error("Failed to parse triage JSON: %s", exc)

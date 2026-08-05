@@ -43,25 +43,6 @@ class DiffResult:
 
 
 @dataclass
-class ReviewIssue:
-    """A single issue found during code review."""
-
-    file: str
-    line: int
-    severity: str
-    message: str
-    suggestion: str = ""
-
-
-@dataclass
-class ReviewReport:
-    """Aggregated AI review output."""
-
-    issues: list[ReviewIssue] = field(default_factory=list)
-    summary: str = ""
-
-
-@dataclass
 class TriageResult:
     """Structured result from AI issue triage."""
 

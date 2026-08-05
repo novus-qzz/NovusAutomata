@@ -11,23 +11,10 @@ The ``BaseCommand`` helper wires common arguments (``--pr-number``,
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    import argparse
-
     from ai_workflow.config import Config
-    from ai_workflow.core import AIProvider
-
-
-class Command(Protocol):
-    """Structural protocol for a command module."""
-
-    def register(self, subparsers: argparse._SubParsersAction) -> None:
-        """Register subcommand arguments with argparse."""
-
-    def run(self, args: argparse.Namespace, config: Config, ai: AIProvider) -> int:
-        """Execute the command and return an exit code."""
 
 
 def setup_logging(config: Config) -> None:

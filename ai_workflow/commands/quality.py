@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from ai_workflow.core import extract_json
 from ai_workflow.gh_utils import GHClient, GHError
@@ -72,7 +72,7 @@ def run(args: argparse.Namespace, config: Config, ai: AIProvider) -> int:
     report = QualityReport(
         overall_score=int(data.get("score", 0)),
         checks=checks,
-        summary=data.get("summary", ""),  # type: ignore[arg-type]
+        summary=cast("str", data.get("summary", "")),
         threshold=60,
     )
 
