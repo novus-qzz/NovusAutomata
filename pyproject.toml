@@ -64,3 +64,18 @@ disable_error_code = ["no-any-return"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q --strict-markers"
+
+[tool.ai]
+enabled = true
+welcome = true
+assign_reviewer = true
+pr_review = true
+auto_fix = true
+test_generator = true
+code_health = true
+security_audit = true
+dependency_audit = true
+version_update = true
+weekly_summary = true
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
