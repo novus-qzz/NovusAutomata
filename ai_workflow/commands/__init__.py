@@ -9,10 +9,12 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 from ai_workflow.commands import (
+    agent,
     assign,
     audit,
     changelog,
     commitlint,
+    dashboard,
     deps,
     describe,
     diff,
@@ -35,7 +37,9 @@ from ai_workflow.commands import (
 )
 
 _REGISTRY: dict[str, tuple[str, Callable]] = {
+    "agent": ("AI agent: orchestrate multi-step workflows", agent),
     "audit": ("Security audit from report", audit),
+    "dashboard": ("Real-time CI dashboard", dashboard),
     "diff": ("Show working-tree diff summary", diff),
     "review": ("AI code review", review),
     "describe": ("Generate PR description", describe),
