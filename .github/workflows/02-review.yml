@@ -13,7 +13,7 @@ jobs:
     outputs:
       language: ${{ steps.detect.outputs.language }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/detect-language
         id: detect
 
@@ -23,7 +23,7 @@ jobs:
     env:
       LANG: ${{ needs.detect.outputs.language }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: reviewdog/action-setup@v1
 

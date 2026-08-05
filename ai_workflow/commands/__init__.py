@@ -10,14 +10,17 @@ if TYPE_CHECKING:
 
 from ai_workflow.commands import (
     assign,
+    audit,
     changelog,
     commitlint,
     deps,
     describe,
+    diff,
     fix,
     gentest,
     health,
     issue2pr,
+    plan,
     quality,
     readme,
     respond,
@@ -25,12 +28,15 @@ from ai_workflow.commands import (
     securix,
     simplify,
     stale,
+    status,
     summary,
     triage,
     welcome,
 )
 
 _REGISTRY: dict[str, tuple[str, Callable]] = {
+    "audit": ("Security audit from report", audit),
+    "diff": ("Show working-tree diff summary", diff),
     "review": ("AI code review", review),
     "describe": ("Generate PR description", describe),
     "fix": ("Auto-fix code issues", fix),
@@ -50,6 +56,8 @@ _REGISTRY: dict[str, tuple[str, Callable]] = {
     "summary": ("Weekly code summary", summary),
     "stale": ("Manage stale issues/PRs", stale),
     "readme": ("Sync README with code", readme),
+    "plan": ("AI plan for upcoming changes", plan),
+    "status": ("Repository status dashboard", status),
 }
 
 
