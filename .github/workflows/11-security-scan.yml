@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write
 
 jobs:
   gitleaks:
@@ -22,10 +23,10 @@ jobs:
 
   bandit:
     runs-on: ubuntu-latest
-    if: hashFiles('**/*.py') != ''
+    if: always()
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - name: Run Bandit
@@ -42,10 +43,10 @@ jobs:
 
   pip-audit:
     runs-on: ubuntu-latest
-    if: hashFiles('**/requirements.txt', '**/pyproject.toml') != ''
+    if: always()
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - name: Run pip-audit
