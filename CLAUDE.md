@@ -55,6 +55,15 @@ NovusAutomata/
 | `deps` | Dependency change review | PR on dep changes |
 | `audit` | Security audit from scanner report | Manual |
 | `issue2pr` | Issue-to-PR conversion | Issue labeled |
+| `explain` | AI code explanation with detail levels | Manual |
+| `perf` | AI performance bottleneck detection | Manual |
+| `deps-audit` | Dependency vulnerability and license audit | Manual |
+| `metrics` | Code complexity and quality metrics dashboard | Manual |
+| `refactor` | AI-powered code refactoring suggestions | Manual |
+| `coverage` | Test coverage analysis and suggestions | Manual |
+| `release` | Automated version bumping and release management | Manual |
+| `docs` | AI documentation generation | Manual |
+| `harden` | Security hardening analysis | Manual |
 
 ### Git Commands (no API key required)
 
