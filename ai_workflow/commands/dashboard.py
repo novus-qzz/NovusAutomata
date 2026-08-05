@@ -1,12 +1,11 @@
-"""Real-time CI dashboard — monitor GitHub Actions runs from the terminal.
+"""实时 CI 仪表板 — 从终端监控 GitHub Actions 运行。
 
-Usage:
-    ai-workflow dashboard            # default branch
+用法:
+    ai-workflow dashboard            # 默认分支
     ai-workflow dashboard --branch main
     ai-workflow dashboard --limit 10
 
-Displays a live table of the latest workflow runs with status, name, branch,
-event, and duration.
+显示最新工作流运行的实时表格，包含状态、名称、分支、事件和持续时间。
 """
 
 from __future__ import annotations
@@ -144,15 +143,15 @@ def run(args: argparse.Namespace, config: Config, ai: AIProvider) -> int:
 
 def register(subparsers: argparse._SubParsersAction) -> None:
     """Register the dashboard subcommand."""
-    p = subparsers.add_parser("dashboard", help="Real-time CI dashboard")
+    p = subparsers.add_parser("dashboard", help="实时 CI 仪表板")
     p.add_argument(
         "--branch",
         default="main",
-        help="Branch to monitor (default: main)",
+        help="要监控的分支（默认：main）",
     )
     p.add_argument(
         "--limit",
         type=int,
         default=10,
-        help="Number of runs to show (default: 10)",
+        help="显示的运行数量（默认：10）",
     )

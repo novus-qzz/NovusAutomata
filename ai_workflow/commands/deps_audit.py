@@ -1,4 +1,4 @@
-"""Dependency audit dashboard with vulnerability and license tracking."""
+"""依赖审计仪表板，支持漏洞和许可证跟踪。"""
 
 from __future__ import annotations
 
@@ -84,10 +84,10 @@ def _run_pip_audit() -> dict[str, object]:
 
 def register(subparsers: argparse._SubParsersAction) -> None:
     """Register the deps-audit subcommand."""
-    p = subparsers.add_parser("deps-audit", help="Audit dependencies for vulnerabilities")
-    p.add_argument("--file", default="requirements.txt", help="Dependency file to audit")
-    p.add_argument("--check-licenses", action="store_true", help="Check license compliance")
-    p.add_argument("--json", action="store_true", help="Output raw JSON")
+    p = subparsers.add_parser("deps-audit", help="审计依赖漏洞")
+    p.add_argument("--file", default="requirements.txt", help="要审计的依赖文件")
+    p.add_argument("--check-licenses", action="store_true", help="检查许可证合规性")
+    p.add_argument("--json", action="store_true", help="输出原始 JSON")
 
 
 def run(args: argparse.Namespace, config: Config, ai: AIProvider) -> int:

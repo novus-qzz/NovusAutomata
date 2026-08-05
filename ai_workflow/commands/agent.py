@@ -1,12 +1,11 @@
-"""AI Agent orchestration engine.
+"""AI 代理编排引擎。
 
-Usage:
-    ai-workflow agent --goal "Review PR #123 and auto-fix any issues"
-    ai-workflow agent --goal "Triage all open issues and file bug reports"
+用法:
+    ai-workflow agent --goal "审查 PR #123 并自动修复问题"
+    ai-workflow agent --goal "分类所有未解决问题并提交 bug 报告"
 
-The agent decomposes a natural-language goal into a command plan, executes each
-step sequentially, feeds prior output into subsequent steps as context, and
-produces a final summary report.
+代理将自然语言目标分解为命令计划，依次执行每个步骤，
+将先前输出作为上下文传递给后续步骤，并生成最终摘要报告。
 """
 
 from __future__ import annotations
@@ -217,10 +216,10 @@ def register(subparsers: argparse._SubParsersAction) -> None:
     """Register the agent subcommand."""
     p = subparsers.add_parser(
         "agent",
-        help="AI agent: orchestrate multi-step workflows",
+        help="AI 代理：编排多步骤工作流",
     )
     p.add_argument(
         "--goal",
         required=True,
-        help="Describe what you want to accomplish",
+        help="描述您想要完成的目标",
     )

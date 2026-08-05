@@ -1,4 +1,4 @@
-"""AI fixes for security scanner findings."""
+"""AI 修复安全扫描发现。"""
 
 from __future__ import annotations
 
@@ -35,8 +35,8 @@ _FILE_BLOCK = re.compile(r"===FILE:(.+?)===\n(.*?)\n===END===", re.DOTALL)
 
 def register(subparsers: argparse._SubParsersAction) -> None:
     """Register the securix subcommand."""
-    p = subparsers.add_parser("securix", help="Fix security findings")
-    p.add_argument("--report", type=str, default="", help="Path to scanner report")
+    p = subparsers.add_parser("securix", help="修复安全发现")
+    p.add_argument("--report", type=str, default="", help="扫描报告路径")
 
 
 def run(args: argparse.Namespace, config: Config, ai: AIProvider) -> int:

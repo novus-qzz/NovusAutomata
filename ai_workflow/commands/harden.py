@@ -1,4 +1,4 @@
-"""Security hardening and vulnerability scanning."""
+"""安全加固和漏洞扫描。"""
 
 from __future__ import annotations
 
@@ -49,15 +49,15 @@ Items to verify before deployment."""
 
 def register(subparsers: argparse._SubParsersAction) -> None:
     """Register the harden subcommand."""
-    p = subparsers.add_parser("harden", help="Security hardening analysis")
-    p.add_argument("--file", help="Analyze specific file")
+    p = subparsers.add_parser("harden", help="安全加固分析")
+    p.add_argument("--file", help="分析特定文件")
     p.add_argument(
         "--check-dependencies",
         action="store_true",
-        help="Check dependency vulnerabilities",
+        help="检查依赖漏洞",
     )
-    p.add_argument("--scan-secrets", action="store_true", help="Scan for hardcoded secrets")
-    p.add_argument("--fix", action="store_true", help="Suggest fixes for vulnerabilities")
+    p.add_argument("--scan-secrets", action="store_true", help="扫描硬编码密钥")
+    p.add_argument("--fix", action="store_true", help="建议漏洞修复方案")
 
 
 def run(args: argparse.Namespace, config: Config, ai: AIProvider) -> int:

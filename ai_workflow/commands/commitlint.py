@@ -1,4 +1,4 @@
-"""AI commit message linting (Conventional Commits)."""
+"""AI 提交消息检查（常规提交规范）。"""
 
 from __future__ import annotations
 
@@ -33,7 +33,7 @@ _HEADER_RE = re.compile(r"^([a-z]+)(?:\(([^)]+)\))?!?: (.+)$")
 
 def register(subparsers: argparse._SubParsersAction) -> None:
     """Register the commitlint subcommand."""
-    subparsers.add_parser("commitlint", help="Lint commit messages")
+    subparsers.add_parser("commitlint", help="检查提交消息")
 
 
 def run(args: argparse.Namespace, config: Config, ai: AIProvider) -> int:

@@ -1,4 +1,4 @@
-"""Show a summary of the working-tree diff."""
+"""显示工作区差异摘要。"""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 def register(subparsers: argparse._SubParsersAction) -> None:
     """Register the diff subcommand."""
-    subparsers.add_parser("diff", help="Show a summary of the working-tree diff")
+    subparsers.add_parser("diff", help="显示工作区差异摘要")
 
 
 def run(args: argparse.Namespace, config: Config, ai: AIProvider) -> int:

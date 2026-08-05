@@ -1,4 +1,4 @@
-"""Show repository health status."""
+"""显示仓库健康状态。"""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 def register(subparsers: argparse._SubParsersAction) -> None:
     """Register the status subcommand."""
-    subparsers.add_parser("status", help="Show repository health status")
+    subparsers.add_parser("status", help="显示仓库健康状态")
 
 
 def run(args: argparse.Namespace, config: Config, ai: AIProvider) -> int:

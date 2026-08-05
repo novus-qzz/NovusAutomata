@@ -1,4 +1,4 @@
-"""AI-powered documentation generation."""
+"""AI 驱动的文档生成。"""
 
 from __future__ import annotations
 
@@ -60,12 +60,12 @@ def _extract_docstrings(file_path: Path) -> dict[str, str]:
 
 def register(subparsers: argparse._SubParsersAction) -> None:
     """Register the docs subcommand."""
-    p = subparsers.add_parser("docs", help="Generate documentation")
-    p.add_argument("--file", help="Generate docs for specific file")
-    p.add_argument("--directory", default="src", help="Generate docs for directory")
-    p.add_argument("--readme", action="store_true", help="Update README with code docs")
-    p.add_argument("--api-docs", action="store_true", help="Generate API documentation")
-    p.add_argument("--dry-run", action="store_true", help="Preview without writing")
+    p = subparsers.add_parser("docs", help="生成文档")
+    p.add_argument("--file", help="为特定文件生成文档")
+    p.add_argument("--directory", default="src", help="为目录生成文档")
+    p.add_argument("--readme", action="store_true", help="用代码文档更新 README")
+    p.add_argument("--api-docs", action="store_true", help="生成 API 文档")
+    p.add_argument("--dry-run", action="store_true", help="预览而不写入")
 
 
 def run(args: argparse.Namespace, config: Config, ai: AIProvider) -> int:

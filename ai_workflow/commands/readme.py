@@ -1,4 +1,4 @@
-"""AI README synchronization with code changes."""
+"""AI README 与代码变更同步。"""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ new README.md content. If no update is needed, output exactly: NO_UPDATE"""
 
 def register(subparsers: argparse._SubParsersAction) -> None:
     """Register the readme subcommand."""
-    subparsers.add_parser("readme", help="Sync README with code changes")
+    subparsers.add_parser("readme", help="同步 README 与代码变更")
 
 
 def run(args: argparse.Namespace, config: Config, ai: AIProvider) -> int:

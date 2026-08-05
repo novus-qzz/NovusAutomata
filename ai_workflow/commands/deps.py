@@ -1,4 +1,4 @@
-"""AI dependency change review."""
+"""AI 依赖变更审查。"""
 
 from __future__ import annotations
 
@@ -46,7 +46,7 @@ _DEP_PATHS = (
 
 def register(subparsers: argparse._SubParsersAction) -> None:
     """Register the deps subcommand."""
-    subparsers.add_parser("deps", help="Review dependency changes")
+    subparsers.add_parser("deps", help="审查依赖变更")
 
 
 def run(args: argparse.Namespace, config: Config, ai: AIProvider) -> int:

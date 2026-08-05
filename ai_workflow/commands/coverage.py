@@ -1,4 +1,4 @@
-"""Test coverage analysis and suggestions."""
+"""测试覆盖率分析与建议。"""
 
 from __future__ import annotations
 
@@ -61,11 +61,11 @@ def _run_coverage() -> dict[str, object]:
 
 def register(subparsers: argparse._SubParsersAction) -> None:
     """Register the coverage subcommand."""
-    p = subparsers.add_parser("coverage", help="Analyze test coverage")
-    p.add_argument("--file", help="Analyze coverage for specific file")
-    p.add_argument("--directory", help="Analyze coverage for directory")
-    p.add_argument("--suggest-tests", action="store_true", help="Suggest tests for uncovered code")
-    p.add_argument("--json", action="store_true", help="Output raw JSON")
+    p = subparsers.add_parser("coverage", help="分析测试覆盖率")
+    p.add_argument("--file", help="分析特定文件的覆盖率")
+    p.add_argument("--directory", help="分析目录的覆盖率")
+    p.add_argument("--suggest-tests", action="store_true", help="为未覆盖代码建议测试")
+    p.add_argument("--json", action="store_true", help="输出原始 JSON")
 
 
 def run(args: argparse.Namespace, config: Config, ai: AIProvider) -> int:

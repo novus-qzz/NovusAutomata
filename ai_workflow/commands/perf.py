@@ -1,4 +1,4 @@
-"""AI performance analysis and bottleneck detection."""
+"""AI 性能分析和瓶颈检测。"""
 
 from __future__ import annotations
 
@@ -46,10 +46,10 @@ Before/after examples for key optimizations.
 
 def register(subparsers: argparse._SubParsersAction) -> None:
     """Register the perf subcommand."""
-    p = subparsers.add_parser("perf", help="Analyze code performance")
-    p.add_argument("--file", help="Path to file to analyze")
-    p.add_argument("--pr-number", type=int, help="PR number to analyze")
-    p.add_argument("--diff", action="store_true", help="Analyze working tree diff")
+    p = subparsers.add_parser("perf", help="分析代码性能")
+    p.add_argument("--file", help="要分析的文件路径")
+    p.add_argument("--pr-number", type=int, help="要分析的 PR 编号")
+    p.add_argument("--diff", action="store_true", help="分析工作区差异")
 
 
 def run(args: argparse.Namespace, config: Config, ai: AIProvider) -> int:

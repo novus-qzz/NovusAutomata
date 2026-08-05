@@ -1,4 +1,4 @@
-"""AI security audit from a scanner report."""
+"""基于扫描报告的 AI 安全审计。"""
 
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ _SYSTEM_PROMPT = (
 
 def register(subparsers: argparse._SubParsersAction) -> None:
     """Register the audit subcommand."""
-    subparsers.add_parser("audit", help="Security audit from scanner report")
+    subparsers.add_parser("audit", help="基于扫描报告的安全审计")
 
 
 def run(args: argparse.Namespace, config: Config, ai: AIProvider) -> int:

@@ -1,4 +1,4 @@
-"""Stale issue and PR management."""
+"""过期问题和 PR 管理。"""
 
 from __future__ import annotations
 
@@ -20,8 +20,8 @@ _SKIP_LABELS = {"bug", "enhancement", "security", "pinned", "weekly-summary"}
 
 def register(subparsers: argparse._SubParsersAction) -> None:
     """Register the stale subcommand."""
-    parser = subparsers.add_parser("stale", help="Manage stale issues/PRs")
-    parser.add_argument("--days", type=int, default=30, help="Inactivity threshold in days")
+    parser = subparsers.add_parser("stale", help="管理过期问题/PR")
+    parser.add_argument("--days", type=int, default=30, help="不活跃阈值（天）")
 
 
 def run(args: argparse.Namespace, config: Config, ai: AIProvider) -> int:

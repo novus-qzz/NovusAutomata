@@ -1,4 +1,4 @@
-"""AI-assisted plan for upcoming changes."""
+"""AI 辅助的变更计划。"""
 
 from __future__ import annotations
 
@@ -26,8 +26,8 @@ _SYSTEM_PROMPT = (
 
 def register(subparsers: argparse._SubParsersAction) -> None:
     """Register the plan subcommand."""
-    p = subparsers.add_parser("plan", help="AI plan for upcoming changes")
-    p.add_argument("--goal", default="", help="Describe what you want to build")
+    p = subparsers.add_parser("plan", help="AI 变更计划")
+    p.add_argument("--goal", default="", help="描述您想要构建的内容")
 
 
 def run(args: argparse.Namespace, config: Config, ai: AIProvider) -> int:

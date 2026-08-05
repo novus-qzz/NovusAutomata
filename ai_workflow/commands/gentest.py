@@ -1,4 +1,4 @@
-"""AI test case generation."""
+"""AI 测试用例生成。"""
 
 from __future__ import annotations
 
@@ -33,8 +33,8 @@ _FILE_BLOCK = re.compile(r"===FILE:(.+?)===\n(.*?)\n===END===", re.DOTALL)
 
 def register(subparsers: argparse._SubParsersAction) -> None:
     """Register the gentest subcommand."""
-    parser = subparsers.add_parser("gentest", help="Generate tests")
-    parser.add_argument("--source", type=str, default="", help="Optional source file to target")
+    parser = subparsers.add_parser("gentest", help="生成测试")
+    parser.add_argument("--source", type=str, default="", help="可选的目标源文件")
 
 
 def run(args: argparse.Namespace, config: Config, ai: AIProvider) -> int:

@@ -1,4 +1,4 @@
-"""AI PR quality gate: multi-dimensional scoring."""
+"""AI PR 质量门：多维度评分。"""
 
 from __future__ import annotations
 
@@ -35,8 +35,8 @@ with exactly these fields (no other text):
 
 def register(subparsers: argparse._SubParsersAction) -> None:
     """Register the quality subcommand."""
-    parser = subparsers.add_parser("quality", help="PR quality gate")
-    parser.add_argument("--pr-number", type=int, required=True, help="PR number")
+    parser = subparsers.add_parser("quality", help="PR 质量门")
+    parser.add_argument("--pr-number", type=int, required=True, help="PR 编号")
 
 
 def run(args: argparse.Namespace, config: Config, ai: AIProvider) -> int:

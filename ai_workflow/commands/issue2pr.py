@@ -1,4 +1,4 @@
-"""Convert a GitHub issue into an auto-fixing PR."""
+"""将 GitHub 问题转换为自动修复 PR。"""
 
 from __future__ import annotations
 
@@ -37,8 +37,8 @@ _FILE_BLOCK = re.compile(r"===FILE:(.+?)===\n(.*?)\n===END===", re.DOTALL)
 
 def register(subparsers: argparse._SubParsersAction) -> None:
     """Register the issue2pr subcommand."""
-    parser = subparsers.add_parser("issue2pr", help="Convert an issue into a PR")
-    parser.add_argument("--issue-number", type=int, required=True, help="Issue number")
+    parser = subparsers.add_parser("issue2pr", help="将问题转换为 PR")
+    parser.add_argument("--issue-number", type=int, required=True, help="问题编号")
 
 
 def run(args: argparse.Namespace, config: Config, ai: AIProvider) -> int:

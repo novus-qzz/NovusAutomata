@@ -1,4 +1,4 @@
-"""AI code explanation with multiple detail levels."""
+"""AI 代码解释，支持多级详细程度。"""
 
 from __future__ import annotations
 
@@ -47,16 +47,16 @@ Potential issues or things to watch out for.
 
 def register(subparsers: argparse._SubParsersAction) -> None:
     """Register the explain subcommand."""
-    p = subparsers.add_parser("explain", help="Explain code with AI")
-    p.add_argument("--file", help="Path to file to explain")
-    p.add_argument("--code", help="Code snippet to explain")
+    p = subparsers.add_parser("explain", help="用 AI 解释代码")
+    p.add_argument("--file", help="要解释的文件路径")
+    p.add_argument("--code", help="要解释的代码片段")
     p.add_argument(
         "--level",
         choices=["beginner", "intermediate", "expert"],
         default="intermediate",
-        help="Explanation detail level",
+        help="解释详细程度",
     )
-    p.add_argument("--pr-number", type=int, help="PR number to explain file from")
+    p.add_argument("--pr-number", type=int, help="要解释文件的 PR 编号")
 
 
 def run(args: argparse.Namespace, config: Config, ai: AIProvider) -> int:

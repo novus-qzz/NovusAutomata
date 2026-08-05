@@ -1,4 +1,4 @@
-"""Automated release management with version bumping and changelog generation."""
+"""自动化发布管理，支持版本升级和变更日志生成。"""
 
 from __future__ import annotations
 
@@ -58,12 +58,12 @@ def _update_version(new_version: str) -> bool:
 
 def register(subparsers: argparse._SubParsersAction) -> None:
     """Register the release subcommand."""
-    p = subparsers.add_parser("release", help="Automated release management")
-    p.add_argument("--bump", choices=["patch", "minor", "major"], help="Version bump type")
-    p.add_argument("--tag", help="Specific version tag (e.g., v1.2.3)")
-    p.add_argument("--generate-changelog", action="store_true", help="Generate changelog")
-    p.add_argument("--publish", action="store_true", help="Publish release to GitHub")
-    p.add_argument("--dry-run", action="store_true", help="Preview changes without applying")
+    p = subparsers.add_parser("release", help="自动化发布管理")
+    p.add_argument("--bump", choices=["patch", "minor", "major"], help="版本升级类型")
+    p.add_argument("--tag", help="特定版本标签（例如 v1.2.3）")
+    p.add_argument("--generate-changelog", action="store_true", help="生成变更日志")
+    p.add_argument("--publish", action="store_true", help="发布到 GitHub")
+    p.add_argument("--dry-run", action="store_true", help="预览更改但不应用")
 
 
 def run(args: argparse.Namespace, config: Config, ai: AIProvider) -> int:

@@ -1,4 +1,4 @@
-"""AI code health report."""
+"""AI 代码健康报告。"""
 
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ Format as markdown with clear sections and a final health score (0-100)."""
 
 def register(subparsers: argparse._SubParsersAction) -> None:
     """Register the health subcommand."""
-    subparsers.add_parser("health", help="Generate a code health report")
+    subparsers.add_parser("health", help="生成代码健康报告")
 
 
 def run(args: argparse.Namespace, config: Config, ai: AIProvider) -> int:

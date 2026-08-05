@@ -1,4 +1,4 @@
-"""AI auto-fix for code issues in a PR or the working tree."""
+"""AI 自动修复 PR 或工作区中的代码问题。"""
 
 from __future__ import annotations
 
@@ -37,8 +37,8 @@ _FILE_BLOCK = re.compile(r"===FILE:(.+?)===\n(.*?)\n===END===", re.DOTALL)
 
 def register(subparsers: argparse._SubParsersAction) -> None:
     """Register the fix subcommand."""
-    parser = subparsers.add_parser("fix", help="Auto-fix code issues")
-    parser.add_argument("--pr-number", type=int, default=0, help="PR number (0 = working tree)")
+    parser = subparsers.add_parser("fix", help="自动修复代码问题")
+    parser.add_argument("--pr-number", type=int, default=0, help="PR 编号（0 = 工作区）")
 
 
 def _parse_fixes(output: str) -> dict[str, str]:

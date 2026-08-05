@@ -1,4 +1,4 @@
-"""AI-powered PR code review."""
+"""AI 驱动的 PR 代码审查。"""
 
 from __future__ import annotations
 
@@ -33,8 +33,8 @@ If no issues are found, output exactly: NO_ISSUES_FOUND"""
 
 def register(subparsers: argparse._SubParsersAction) -> None:
     """Register the review subcommand."""
-    parser = subparsers.add_parser("review", help="AI code review")
-    parser.add_argument("--pr-number", type=int, required=True, help="PR number to review")
+    parser = subparsers.add_parser("review", help="AI 代码审查")
+    parser.add_argument("--pr-number", type=int, required=True, help="要审查的 PR 编号")
 
 
 def run(args: argparse.Namespace, config: Config, ai: AIProvider) -> int:

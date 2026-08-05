@@ -1,4 +1,4 @@
-"""AI-powered automated code refactoring."""
+"""AI 驱动的自动代码重构。"""
 
 from __future__ import annotations
 
@@ -46,17 +46,17 @@ Recommendations for testing the changes."""
 
 def register(subparsers: argparse._SubParsersAction) -> None:
     """Register the refactor subcommand."""
-    p = subparsers.add_parser("refactor", help="AI-powered code refactoring")
-    p.add_argument("--file", help="File to refactor")
+    p = subparsers.add_parser("refactor", help="AI 驱动的代码重构")
+    p.add_argument("--file", help="要重构的文件")
     p.add_argument(
         "--type",
         choices=["extract-method", "rename", "simplify", "remove-dead", "move"],
-        help="Refactoring type",
+        help="重构类型",
     )
-    p.add_argument("--old-name", help="Old name for rename refactoring")
-    p.add_argument("--new-name", help="New name for rename refactoring")
-    p.add_argument("--dry-run", action="store_true", help="Show changes without applying")
-    p.add_argument("--pr-number", type=int, help="PR number to refactor")
+    p.add_argument("--old-name", help="重命名重构的旧名称")
+    p.add_argument("--new-name", help="重命名重构的新名称")
+    p.add_argument("--dry-run", action="store_true", help="显示更改但不应用")
+    p.add_argument("--pr-number", type=int, help="要重构的 PR 编号")
 
 
 def run(args: argparse.Namespace, config: Config, ai: AIProvider) -> int:

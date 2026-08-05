@@ -1,4 +1,4 @@
-"""Code metrics dashboard with complexity and quality tracking."""
+"""代码指标仪表板，支持复杂度和质量跟踪。"""
 
 from __future__ import annotations
 
@@ -61,10 +61,10 @@ def _analyze_file(file_path: Path) -> dict[str, object]:
 
 def register(subparsers: argparse._SubParsersAction) -> None:
     """Register the metrics subcommand."""
-    p = subparsers.add_parser("metrics", help="Show code metrics dashboard")
-    p.add_argument("--file", help="Analyze single file")
-    p.add_argument("--directory", default="src", help="Directory to analyze")
-    p.add_argument("--json", action="store_true", help="Output raw JSON")
+    p = subparsers.add_parser("metrics", help="显示代码指标仪表板")
+    p.add_argument("--file", help="分析单个文件")
+    p.add_argument("--directory", default="src", help="要分析的目录")
+    p.add_argument("--json", action="store_true", help="输出原始 JSON")
 
 
 def run(args: argparse.Namespace, config: Config, ai: AIProvider) -> int:

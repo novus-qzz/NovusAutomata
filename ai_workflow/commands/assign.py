@@ -1,4 +1,4 @@
-"""Suggest PR reviewers based on diff history."""
+"""基于差异历史建议 PR 审查者。"""
 
 from __future__ import annotations
 
@@ -20,8 +20,8 @@ logger = logging.getLogger(__name__)
 
 def register(subparsers: argparse._SubParsersAction) -> None:
     """Register the assign subcommand."""
-    parser = subparsers.add_parser("assign", help="Suggest PR reviewers")
-    parser.add_argument("--pr-number", type=int, required=True, help="PR number")
+    parser = subparsers.add_parser("assign", help="建议 PR 审查者")
+    parser.add_argument("--pr-number", type=int, required=True, help="PR 编号")
 
 
 def _git_blame_authors(path: str, limit: int = 5) -> list[str]:

@@ -1,4 +1,4 @@
-"""AI response to issue comments."""
+"""AI 对问题评论的响应。"""
 
 from __future__ import annotations
 
@@ -25,9 +25,9 @@ _SYSTEM_PROMPT = """You are a helpful AI assistant responding to a user's commen
 
 def register(subparsers: argparse._SubParsersAction) -> None:
     """Register the respond subcommand."""
-    parser = subparsers.add_parser("respond", help="Respond to an issue comment")
+    parser = subparsers.add_parser("respond", help="响应问题评论")
     parser.add_argument("--issue-number", type=int, required=True)
-    parser.add_argument("--comment", required=True, help="The comment to respond to")
+    parser.add_argument("--comment", required=True, help="要响应的评论")
 
 
 def run(args: argparse.Namespace, config: Config, ai: AIProvider) -> int:

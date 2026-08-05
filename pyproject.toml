@@ -20,13 +20,13 @@ select = [
     "UP", "SIM", "PT", "ARG", "RUF",
     "B", "C4", "RET", "TCH", "FURB",
 ]
-ignore = ["D100", "D104"]
+ignore = ["D100", "D104", "RUF001", "RUF002"]
 fixable = ["ALL"]
 unfixable = []
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["D", "ANN", "ARG", "TC"]
-"ai_workflow/commands/*" = ["ARG001"]
+"ai_workflow/commands/*" = ["ARG001", "D415"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

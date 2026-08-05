@@ -1,4 +1,4 @@
-"""AI-generated changelog entries."""
+"""AI 生成的变更日志条目。"""
 
 from __future__ import annotations
 
@@ -30,9 +30,9 @@ Format as markdown."""
 
 def register(subparsers: argparse._SubParsersAction) -> None:
     """Register the changelog subcommand."""
-    parser = subparsers.add_parser("changelog", help="Generate a changelog entry")
-    parser.add_argument("--from-tag", default="", help="Start tag (empty = earliest)")
-    parser.add_argument("--to-tag", default="", help="End tag or HEAD")
+    parser = subparsers.add_parser("changelog", help="生成变更日志条目")
+    parser.add_argument("--from-tag", default="", help="起始标签（空 = 最早）")
+    parser.add_argument("--to-tag", default="", help="结束标签或 HEAD")
 
 
 def run(args: argparse.Namespace, config: Config, ai: AIProvider) -> int:

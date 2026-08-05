@@ -1,4 +1,4 @@
-"""AI code simplification suggestions."""
+"""AI 代码简化建议。"""
 
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ _SYSTEM_PROMPT = (
 
 def register(subparsers: argparse._SubParsersAction) -> None:
     """Register the simplify subcommand."""
-    subparsers.add_parser("simplify", help="Suggest code simplifications")
+    subparsers.add_parser("simplify", help="建议代码简化")
 
 
 def run(args: argparse.Namespace, config: Config, ai: AIProvider) -> int:

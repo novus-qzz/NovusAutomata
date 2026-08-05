@@ -1,4 +1,4 @@
-"""Welcome message for first-time contributors."""
+"""欢迎首次贡献者的消息。"""
 
 from __future__ import annotations
 
@@ -28,8 +28,8 @@ _SYSTEM_PROMPT = (
 
 def register(subparsers: argparse._SubParsersAction) -> None:
     """Register the welcome subcommand."""
-    p = subparsers.add_parser("welcome", help="Welcome first-time contributors")
-    p.add_argument("--username", required=True, help="GitHub username")
+    p = subparsers.add_parser("welcome", help="欢迎首次贡献者")
+    p.add_argument("--username", required=True, help="GitHub 用户名")
 
 
 def run(args: argparse.Namespace, config: Config, ai: AIProvider) -> int:

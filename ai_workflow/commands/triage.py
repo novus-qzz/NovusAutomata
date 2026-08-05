@@ -1,4 +1,4 @@
-"""AI issue triage: classify, label, and prioritize."""
+"""AI 问题分类：分类、标记和优先级排序。"""
 
 from __future__ import annotations
 
@@ -37,8 +37,8 @@ Priority guidelines:
 
 def register(subparsers: argparse._SubParsersAction) -> None:
     """Register the triage subcommand."""
-    parser = subparsers.add_parser("triage", help="Triage an issue")
-    parser.add_argument("--issue-number", type=int, required=True, help="Issue number")
+    parser = subparsers.add_parser("triage", help="问题分类")
+    parser.add_argument("--issue-number", type=int, required=True, help="问题编号")
 
 
 def run(args: argparse.Namespace, config: Config, ai: AIProvider) -> int:

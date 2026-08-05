@@ -1,4 +1,4 @@
-"""AI weekly code summary report."""
+"""AI 每周代码摘要报告。"""
 
 from __future__ import annotations
 
@@ -25,8 +25,8 @@ Format as markdown with sections:
 
 def register(subparsers: argparse._SubParsersAction) -> None:
     """Register the summary subcommand."""
-    parser = subparsers.add_parser("summary", help="Generate a weekly summary")
-    parser.add_argument("--since", default="1 week ago", help="Start of the period")
+    parser = subparsers.add_parser("summary", help="生成每周摘要")
+    parser.add_argument("--since", default="1 week ago", help="时间段起始")
 
 
 def run(args: argparse.Namespace, config: Config, ai: AIProvider) -> int:

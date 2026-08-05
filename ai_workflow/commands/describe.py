@@ -1,4 +1,4 @@
-"""AI-generated PR descriptions."""
+"""AI 生成的 PR 描述。"""
 
 from __future__ import annotations
 
@@ -37,8 +37,8 @@ Title: <conventional-commit-type>: <brief description>
 
 def register(subparsers: argparse._SubParsersAction) -> None:
     """Register the describe subcommand."""
-    parser = subparsers.add_parser("describe", help="Generate PR description")
-    parser.add_argument("--pr-number", type=int, required=True, help="PR number to describe")
+    parser = subparsers.add_parser("describe", help="生成 PR 描述")
+    parser.add_argument("--pr-number", type=int, required=True, help="要描述的 PR 编号")
 
 
 def run(args: argparse.Namespace, config: Config, ai: AIProvider) -> int:
