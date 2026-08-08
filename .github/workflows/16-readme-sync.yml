@@ -23,7 +23,7 @@ jobs:
       - name: AI README Sync
         env:
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
-          NVIDIA_GENERIC_MODEL: ${{ vars.NVIDIA_GENERIC_MODEL || 'deepseek-ai/deepseek-v4-flash' }}
+          NVIDIA_GENERIC_MODEL: ${{ vars.NVIDIA_GENERIC_MODEL || 'deepseek-ai/deepseek-v4-flash-0731' }}
         run: |
           python -m ai_workflow readme
 
