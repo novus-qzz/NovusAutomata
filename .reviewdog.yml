@@ -1,0 +1,3 @@
+reporter: github-pr-check
+level: warning
+filter_mode: nofilter
