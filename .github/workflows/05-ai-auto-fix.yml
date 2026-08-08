@@ -1,12 +1,10 @@
-name: "04 AI Fix - Auto Commit"
-
+name: "05 AI - Auto Fix"
 on:
   workflow_dispatch:
     inputs:
-      base-ref:
-        description: "Base branch/ref to diff against (e.g. main)"
+      pr-number:
+        description: "PR number to fix"
         required: false
-        default: "main"
   pull_request:
     types: [opened, synchronize]
 
@@ -27,24 +25,21 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install dependencies
-        run: pip install numpy
-
-      - name: Run AI auto-fix (with evolution)
+      - name: Run AI auto-fix
         id: fix
         env:
-          AI_API_KEY: ${{ secrets.AI_REVIEW_API_KEY }}
-          AI_BASE_URL: ${{ vars.AI_REVIEW_BASE_URL || 'https://token.sensenova.cn/v1' }}
-          AI_MODEL: ${{ vars.AI_REVIEW_MODEL_STANDARD || 'sensenova-6.7-flash-lite' }}
-          AI_FIX_BASE_SHA: ${{ github.event.inputs.base-ref || github.event.pull_request.base.sha || 'main' }}
-        run: python .github/scripts/ai_fix_evolver.py
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          NVIDIA_FIX_MODEL: ${{ vars.NVIDIA_FIX_MODEL || 'deepseek-ai/deepseek-v4-flash' }}
+        run: |
+          python -m ai_workflow fix \
+            --pr-number ${{ github.event.inputs.pr-number || github.event.pull_request.number || 0 }}
 
       - name: Commit and push fixes
         if: steps.fix.outcome == 'success'
         run: |
           if [ -n "$(git status --porcelain)" ]; then
-            git config user.name "novus-qzz[bot]"
-            git config user.email "admin@novus.qzz.io"
+            git config user.name "novus-automata[bot]"
+            git config user.email "bot@novusautomata.dev"
             git add -A
             git commit -m "chore: AI auto-fix [NovusAutomata]"
             git push

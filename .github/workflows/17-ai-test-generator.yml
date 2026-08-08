@@ -1,0 +1,42 @@
+name: "17 AI - Test Generator"
+on:
+  workflow_dispatch:
+    inputs:
+      source:
+        description: "Source file to generate tests for (optional)"
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  gentest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: AI Test Generation
+        env:
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          NVIDIA_GENERIC_MODEL: ${{ vars.NVIDIA_GENERIC_MODEL || 'deepseek-ai/deepseek-v4-flash' }}
+        run: |
+          python -m ai_workflow gentest --source "${{ github.event.inputs.source }}"
+
+      - name: Commit generated tests
+        if: always()
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git config user.name "novus-automata[bot]"
+            git config user.email "bot@novusautomata.dev"
+            git add tests
+            git commit -m "test: AI-generated test cases [NovusAutomata]" || true
+            git push
+          else
+            echo "::notice::No test files generated"
+          fi

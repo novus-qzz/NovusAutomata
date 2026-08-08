@@ -1,0 +1,32 @@
+name: "21 AI - Assign Reviewer"
+on:
+  pull_request:
+    types: [opened]
+  workflow_dispatch:
+    inputs:
+      pr-number:
+        description: "PR number"
+        required: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  assign:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: AI Reviewer Suggestions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python -m ai_workflow assign \
+            --pr-number ${{ github.event.inputs.pr-number || github.event.pull_request.number }}

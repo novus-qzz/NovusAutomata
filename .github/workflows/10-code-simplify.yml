@@ -1,0 +1,25 @@
+name: "10 AI - Code Simplify"
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  simplify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: AI Simplify Suggestions
+        env:
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          NVIDIA_GENERIC_MODEL: ${{ vars.NVIDIA_GENERIC_MODEL || 'deepseek-ai/deepseek-v4-flash' }}
+        run: |
+          python -m ai_workflow simplify

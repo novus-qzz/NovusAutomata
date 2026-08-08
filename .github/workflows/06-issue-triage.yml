@@ -1,0 +1,32 @@
+name: "06 AI - Issue Triage"
+on:
+  issues:
+    types: [opened]
+  workflow_dispatch:
+    inputs:
+      issue-number:
+        description: "Issue number"
+        required: true
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: AI Issue Triage
+        env:
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          NVIDIA_TRIAGE_MODEL: ${{ vars.NVIDIA_TRIAGE_MODEL || 'nvidia/nemotron-3-super-120b-a12b' }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python -m ai_workflow triage \
+            --issue-number ${{ github.event.inputs.issue-number || github.event.issue.number }}

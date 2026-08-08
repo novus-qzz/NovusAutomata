@@ -1,0 +1,54 @@
+name: "18 AI - Security Fix"
+on:
+  workflow_dispatch:
+    inputs:
+      report:
+        description: "Path to security scanner report"
+        required: false
+  workflow_run:
+    workflows: ["11 Security - Scan"]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  securix:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'failure'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: AI Security Fix
+        id: securix
+        env:
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          NVIDIA_SECURITY_MODEL: ${{ vars.NVIDIA_SECURITY_MODEL || 'deepseek-ai/deepseek-v4-pro' }}
+        run: |
+          python -m ai_workflow securix --report "${{ github.event.inputs.report }}"
+
+      - name: Create fix PR
+        if: steps.securix.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            BRANCH="fix/ai-security"
+            git checkout -b "$BRANCH"
+            git add -A
+            git commit -m "fix: AI security remediation [NovusAutomata]" || true
+            git push origin "$BRANCH" || true
+            gh pr create \
+              --title "Fix: AI security remediation" \
+              --body "Auto-generated security fixes from AI scanner analysis." \
+              --head "$BRANCH" || true
+          else
+            echo "::notice::No security fixes generated"
+          fi

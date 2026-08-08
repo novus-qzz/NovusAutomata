@@ -1,51 +1,40 @@
-name: "02 Review - reviewdog"
-
+name: "02 Lint - reviewdog"
 on:
   pull_request:
-    types: [opened, synchronize]
+  workflow_dispatch:
 
 permissions:
   contents: read
   pull-requests: write
 
 jobs:
-  review:
+  detect:
     runs-on: ubuntu-latest
+    outputs:
+      language: ${{ steps.detect.outputs.language }}
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: reviewdog/action-setup@v1
-        with:
-          reviewdog_version: latest
-
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/detect-language
         id: detect
 
-      # ---- Node.js ----
-      - if: steps.detect.outputs.language == 'node'
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - if: steps.detect.outputs.language == 'node'
-        run: npm ci || npm install
-      - if: steps.detect.outputs.language == 'node'
-        run: npx --yes eslint -f checkstyle . | reviewdog -f=checkstyle -name=eslint -reporter=github-pr-review -filter-mode=nofilter -fail-on-error=false
-        env:
-          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  reviewdog:
+    needs: detect
+    runs-on: ubuntu-latest
+    env:
+      LANG: ${{ needs.detect.outputs.language }}
+    steps:
+      - uses: actions/checkout@v6
 
-      # ---- Python ----
-      - if: steps.detect.outputs.language == 'python'
-        run: pip install ruff
-      - if: steps.detect.outputs.language == 'python'
-        run: ruff check --output-format rdjson . | reviewdog -f=rdjson -name=ruff -reporter=github-pr-review -filter-mode=nofilter -fail-on-error=false
-        env:
-          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: reviewdog/action-setup@v1
 
-      # ---- Go ----
-      - if: steps.detect.outputs.language == 'go'
-        uses: golangci/golangci-lint-action@v6
-      - if: steps.detect.outputs.language == 'go'
-        run: golangci-lint run --out-format=checkstyle . | reviewdog -f=checkstyle -name=golangci-lint -reporter=github-pr-review -filter-mode=nofilter -fail-on-error=false
+      - name: Ruff reviewdog
+        if: env.LANG == 'python'
+        uses: reviewdog/action-setup@v1
+
+      - if: env.LANG == 'python'
+        run: |
+          pip install ruff
+          reviewdog -reporter=github-pr-check -level=warning \
+            -filter-mode=nofilter ruff check .
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}

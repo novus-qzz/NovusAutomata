@@ -1,0 +1,26 @@
+name: "15 AI - Stale Management"
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: AI Stale Management
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python -m ai_workflow stale --days 30

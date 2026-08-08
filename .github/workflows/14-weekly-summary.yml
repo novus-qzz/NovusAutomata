@@ -1,0 +1,29 @@
+name: "14 AI - Weekly Summary"
+on:
+  schedule:
+    - cron: "0 9 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  summary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: AI Weekly Summary
+        env:
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          NVIDIA_SUMMARY_MODEL: ${{ vars.NVIDIA_SUMMARY_MODEL || 'deepseek-ai/deepseek-v4-flash' }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python -m ai_workflow summary --since "1 week ago"
