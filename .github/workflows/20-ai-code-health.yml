@@ -24,7 +24,7 @@ jobs:
         id: health
         env:
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
-          NVIDIA_SECURITY_MODEL: ${{ vars.NVIDIA_SECURITY_MODEL || 'deepseek-ai/minimaxai/minimax-m3' }}
+          NVIDIA_SECURITY_MODEL: ${{ vars.NVIDIA_SECURITY_MODEL || 'minimaxai/minimax-m3' }}
         run: |
           python -m ai_workflow health > /tmp/health-report.md
 
