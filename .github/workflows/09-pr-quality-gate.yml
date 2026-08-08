@@ -27,7 +27,7 @@ jobs:
       - name: AI Quality Gate
         env:
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
-          NVIDIA_QUALITY_MODEL: ${{ vars.NVIDIA_QUALITY_MODEL || 'deepseek-ai/deepseek-v4-pro' }}
+          NVIDIA_QUALITY_MODEL: ${{ vars.NVIDIA_QUALITY_MODEL || 'deepseek-ai/minimaxai/minimax-m3' }}
           GH_TOKEN: ${{ github.token }}
         run: |
           python -m ai_workflow quality \

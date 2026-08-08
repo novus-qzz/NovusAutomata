@@ -1,0 +1,35 @@
+name: "03 AI Review - SenseNova"
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      pr-number:
+        description: "PR number to review"
+        required: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: tag1consulting/ai-pr-review/container-action@main
+        with:
+          provider: openai-compatible
+          api-key: ${{ secrets.AI_REVIEW_API_KEY }}
+          base-url: ${{ vars.AI_REVIEW_BASE_URL || 'https://token.sensenova.cn/v1' }}
+          model-standard: ${{ vars.AI_REVIEW_MODEL_STANDARD || 'sensenova-6.7-flash-lite' }}
+          model-premium: ${{ vars.AI_REVIEW_MODEL_PREMIUM || 'sensenova-6.7-flash-lite' }}
+          review-mode: quick
+          pr-number: ${{ github.event.inputs.pr-number || github.event.pull_request.number }}
+          base-ref: ${{ github.event.pull_request.base.ref || 'main' }}
+          head-sha: ${{ github.event.pull_request.head.sha }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}

@@ -32,7 +32,7 @@ jobs:
       - name: AI Issue to PR
         env:
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
-          NVIDIA_FIX_MODEL: ${{ vars.NVIDIA_FIX_MODEL || 'deepseek-ai/deepseek-v4-flash' }}
+          NVIDIA_FIX_MODEL: ${{ vars.NVIDIA_FIX_MODEL || 'deepseek-ai/deepseek-v4-flash-0731' }}
           GH_TOKEN: ${{ github.token }}
         run: |
           python -m ai_workflow issue2pr \

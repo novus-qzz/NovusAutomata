@@ -23,7 +23,7 @@ jobs:
       - name: AI Weekly Summary
         env:
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
-          NVIDIA_SUMMARY_MODEL: ${{ vars.NVIDIA_SUMMARY_MODEL || 'deepseek-ai/deepseek-v4-flash' }}
+          NVIDIA_SUMMARY_MODEL: ${{ vars.NVIDIA_SUMMARY_MODEL || 'deepseek-ai/deepseek-v4-flash-0731' }}
           GH_TOKEN: ${{ github.token }}
         run: |
           python -m ai_workflow summary --since "1 week ago"
