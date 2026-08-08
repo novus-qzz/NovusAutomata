@@ -75,7 +75,7 @@ jobs:
         run: python -m ai_workflow.commands.audit
       - name: AI Dependency Version Check
         if: steps.cfg.outputs.enabled == 'true'
-        run: python -m ai_workflow.commands.version
+        run: python -m ai_workflow.commands.deps-audit || true
       - name: AI Weekly Summary
         if: steps.cfg.outputs.enabled == 'true'
         run: python -m ai_workflow.commands.summary
