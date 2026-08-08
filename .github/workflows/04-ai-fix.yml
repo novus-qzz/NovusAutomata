@@ -27,14 +27,17 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Run AI auto-fix
+      - name: Install dependencies
+        run: pip install numpy
+
+      - name: Run AI auto-fix (with evolution)
         id: fix
         env:
           AI_API_KEY: ${{ secrets.AI_REVIEW_API_KEY }}
           AI_BASE_URL: ${{ vars.AI_REVIEW_BASE_URL || 'https://token.sensenova.cn/v1' }}
           AI_MODEL: ${{ vars.AI_REVIEW_MODEL_STANDARD || 'sensenova-6.7-flash-lite' }}
           AI_FIX_BASE_SHA: ${{ github.event.inputs.base-ref || github.event.pull_request.base.sha || 'main' }}
-        run: python .github/scripts/ai_fix.py
+        run: python .github/scripts/ai_fix_evolver.py
 
       - name: Commit and push fixes
         if: steps.fix.outcome == 'success'
