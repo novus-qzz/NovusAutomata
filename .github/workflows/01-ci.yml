@@ -18,7 +18,7 @@ jobs:
     outputs:
       language: ${{ steps.detect.outputs.language }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/detect-language
         id: detect
 
@@ -32,7 +32,7 @@ jobs:
     env:
       LANG: ${{ needs.detect.outputs.language }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Cache dependencies
         uses: actions/cache@v5
